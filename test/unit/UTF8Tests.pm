@@ -1,4 +1,3 @@
-#
 # Currently a mostly empty test package; waiting for someone with an interest
 # in UTF-8 to develop some meaningful tests. Specifically, manipulation of
 # $Foswiki::cfg{Site}{CharSet}
@@ -11,12 +10,53 @@
 # to have to work out how to re-initialise Foswiki for each test)
 #
 package UTF8Tests;
-use FoswikiFnTestCase;
-our @ISA = qw( FoswikiFnTestCase );
-
 use strict;
+use warnings;
+use utf8;
+use warnings qw( FATAL utf8 );
+use FoswikiSeleniumTestCase;
+our @ISA = qw( FoswikiSeleniumTestCase );
 
-use Foswiki;
+if ( $^V >= 5.12 ) {
+    use feature 'unicode_strings';
+}
+
+use Foswiki();
+
+sub set_up {
+    my ($this) = @_;
+
+    $this->SUPER::set_up();
+
+    # Disable plugins which add noise
+    $Foswiki::cfg{Site}{CharSet} = 'utf-8';
+
+    my $query = new Unit::Request("");
+    $query->path_info("/$this->{test_web}/$this->{test_topic}");
+
+    $this->{session}  = Foswiki->new( undef, $query );
+    $this->{request}  = $query;
+    $this->{response} = Unit::Response->new();
+
+    $this->{test_topicObject} = Foswiki::Meta->new(
+        $this->{session},    $this->{test_web},
+        $this->{test_topic}, "BLEEGLE\n"
+    );
+
+}
+
+sub verify_something {
+    my $this = shift;
+    $this->login();
+    $this->selenium->open_ok(
+        Foswiki::Func::getScriptUrl( $this->{test_web}, $this->{test_topic},
+            'edit' )
+          . '?nowysiwyg=1'
+    );
+    $this->selenium->type( 'id=topic', 'зеленый' );
+    $this->selenium->click('id=save');
+    $this->selenium->pause(10000);
+}
 
 sub DISABLEtest_urlEncodeDecode {
     my $this = shift;
