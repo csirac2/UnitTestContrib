@@ -23,4 +23,16 @@ $Foswiki::cfg{UnitTestContrib}{SeleniumRc}{Browsers} = {};
 # The base timeout in milliseconds, used when waiting for the browser (and by implication, the server) to respond.
 # You may have to increase this if your test setup is slow.
 $Foswiki::cfg{UnitTestContrib}{SeleniumRc}{BaseTimeout} = 5000;
-
+# **PERL 40x10**
+# <p>For multi-hosted Foswiki installations. Some Selenium tests need to test the Foswiki installation from different webservers or webserver configurations. For example, <code>UTF8Tests</code> needs to verify against different <code>Foswiki::Engines</code> such as the default CGI engine, ModFastCGIEngineContrib and ModPerlEngineContrib. These require different apache configurations made accessible from different hostnames or URL paths.</p>
+# <p>It is keyed by Foswiki cfg identifier - choose identifiers as seems sensible. Foswiki cfg identifiers may only consist of alphanumeric characters.</p>
+# <p>Example identifiers: <code>default FastCGI ModPerl</code></p>
+# <p>The values are hashrefs of <code>$Foswiki::cfg</code> key/value pairs that need to be set for accessing the Foswiki host/path. Typical keys are <code>PubUrlPath, ScriptUrlPath</code> and <code>DefaultUrlHost</code>.</p>
+# <p>A default Foswiki cfg named <code>default</code> will always exist (even if <code>{SeleniumRc}{Foswikis}</code> is empty/undef), which will contain <code>DefaultUrlHost PermittedRedirectHostUrls ScriptUrlPath ScriptUrlPaths PubUrlPath</code> key/values from your existing <code>$Foswiki::cfg</code></p>
+# <p>Example:<pre><code>{
+#   FastCGI => {
+#       ScriptUrlPath => '/foswiki/fastcgi/bin',
+#       PubUrlPath    => '/foswiki/fastcgi/pub'
+#   }
+#}</code></pre> is a valid setting which might be the UrlPath keys necessary to access a Foswiki installation via <code>mod_fcgid</code> apache configuration (where the "default" configuration might be the standard, plain-old-CGI config).
+$Foswiki::cfg{UnitTestContrib}{SeleniumRc}{Foswikis} = {};
