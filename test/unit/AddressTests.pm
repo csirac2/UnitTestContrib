@@ -243,8 +243,10 @@ sub new {
 
     $this->{test_web}   = $test_web;
     $this->{test_topic} = 'TestTopic';
+    $this->{session} = Foswiki->new();
     $this->gen_testrange_fns();
     $this->gen_testspec_fns();
+    delete $this->{session};
 
     return $this;
 }
@@ -254,6 +256,14 @@ sub recycle {
     my ($this, $fixture_part) = @_;
 
     return 1;
+}
+
+sub set_up {
+    my ($this) = @_;
+
+    $this->SUPER::set_up();
+
+    return;
 }
 
 sub set_up_session {
