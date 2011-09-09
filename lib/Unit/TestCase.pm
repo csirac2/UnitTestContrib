@@ -22,6 +22,8 @@ use vars qw( $differ );
 
 my $SEPARATOR_STRING = '########################################';
 
+sub TRACE { 0 }
+
 =begin TML
 
 ---++ ClassMethod new()
@@ -68,6 +70,42 @@ Subclasses should call the superclass method in overrides.
 =cut
 
 sub tear_down {
+}
+
+=begin TML
+
+---+ ObjectMethod set_up_run()
+
+Called by the test environment before any tests in a suite are run, used to set
+up test fixtures common to all tests in the suite.
+
+Subclasses should call the superclass method in overrides.
+
+=cut
+
+sub set_up_run {
+    my $this = shift;
+
+    print __PACKAGE__ . "::set_up_run()\n" if TRACE;
+
+    return;
+}
+
+=begin TML
+
+---++ ObjectMethod tear_down_run()
+Tear down temporary test fixtures after all tests in a suite have run.
+
+Subclasses should call the superclass method in overrides.
+
+=cut
+
+sub tear_down_run {
+    my $this = shift;
+
+    print __PACKAGE__ . "::tear_down_run()\n" if TRACE;
+
+    return;
 }
 
 =begin TML

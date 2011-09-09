@@ -22,7 +22,6 @@ use Unit::TestCase;
 our @ISA = qw( Unit::TestCase );
 
 use Data::Dumper;
-
 use Foswiki;
 use Foswiki::Meta;
 use Foswiki::Plugins;
@@ -30,23 +29,24 @@ use Unit::Request;
 use Unit::Response;
 use Error qw( :try );
 
+sub TRACE { 0 }
+
 BEGIN {
 
-# SMELL: These were tainting @INC,   TestRunner.pl already adds these to the path
-#        Tests still seem to run without them being added here.
-#push( @INC, "$ENV{FOSWIKI_HOME}/lib" ) if defined( $ENV{FOSWIKI_HOME} );
-#unshift @INC, '../../bin';    # SMELL: dodgy
+    # SMELL: These were tainting @INC,   TestRunner.pl already adds these to the path
+    #        Tests still seem to run without them being added here.
+    #push( @INC, "$ENV{FOSWIKI_HOME}/lib" ) if defined( $ENV{FOSWIKI_HOME} );
+    #unshift @INC, '../../bin';    # SMELL: dodgy
     require 'setlib.cfg';
     $SIG{__DIE__} = sub { Carp::confess $_[0] };
 }
-
-our $didOnlyOnceChecks = 0;
 
 # Temporary directory to store work files in (sessions, logs etc).
 # Will be cleaned up after running the tests unless the environment
 # variable FOSWIKI_DEBUG_KEEP is true
 use File::Temp;
 my $cleanup = $ENV{FOSWIKI_DEBUG_KEEP} ? 0 : 1;
+my @set_up_list = (qw(meta env config workingdir session));
 
 sub new {
     my $class = shift;
@@ -55,9 +55,11 @@ sub new {
 }
 
 # Checks we only need to run once per test run
-sub _onceOnlyChecks {
-    return if $didOnlyOnceChecks;
+sub set_up_run {
+    my $this = shift;
 
+    print __PACKAGE__ . "::set_up_run()\n" if TRACE;
+    $this->SUPER::set_up_run(@_);
     # Make sure we can create directories in $Foswiki::cfg{DataDir}, otherwise
     # the tests will mysteriously fail.
     my $t = "$Foswiki::cfg{DataDir}/UnitTestCheckDir";
@@ -97,12 +99,12 @@ sub _onceOnlyChecks {
       . "must be able to change permissions on files it creates.";
     unlink($t) || die "Could not remove $t: $!";
 
-    $didOnlyOnceChecks = 1;
+    return;
 }
 
 # Override in subclasses to change the config on a per-testcase basis
 sub loadExtraConfig {
-    my $this    = shift;
+    my $this = shift;
     my $context = shift;
 }
 
@@ -113,18 +115,40 @@ use Cwd;
 sub set_up {
     my $this = shift;
 
+    print __PACKAGE__ . "::set_up()\n" if TRACE;
     $this->SUPER::set_up(@_);
-
-    $this->{__EnvSafe} = {};
-    foreach my $sym ( keys %ENV ) {
-        next unless defined($sym);
-        $this->{__EnvSafe}->{$sym} = $ENV{$sym};
-    }
 
     # Tell the world we are running unit tests. Nasty, but needed to
     # avoid corruption of data spaces when unit tests are run alongside
     # a running wiki.
     $Foswiki::inUnitTestMode = 1;
+
+    foreach my $thing (@set_up_list) {
+        if (not $this->can('recycle') or not $this->recycle($thing)) {
+            print __PACKAGE__ . " Setting up $thing\n" if TRACE;
+            eval "\$this->set_up_$thing();";
+        } elsif (TRACE) {
+            print __PACKAGE__ . " NOT setting up $thing, recycled\n";
+        }
+    }
+
+    return;
+}
+
+sub set_up_env {
+    my $this = shift;
+
+    $this->{__EnvSafe} = {};
+    foreach my $sym (keys %ENV) {
+        next unless defined($sym);
+        $this->{__EnvSafe}->{$sym} = $ENV{$sym};
+    }
+
+    return;
+}
+
+sub set_up_config {
+    my $this = shift;
 
     # This needs to be a deep copy
     $this->{__FoswikiSafe} =
@@ -149,14 +173,13 @@ sub set_up {
     local $/ = "\n";
     while (<F>) {
         if (/^!include .*?([^\/]+Plugin)$/) {
-
             # Don't enable EmptyPlugin - Disabled by default
             next if $1 eq 'EmptyPlugin';
-            unless ( exists $Foswiki::cfg{Plugins}{$1}{Module} ) {
+            unless( exists $Foswiki::cfg{Plugins}{$1}{Module} ) {
                 $Foswiki::cfg{Plugins}{$1}{Module} = 'Foswiki::Plugins::' . $1;
                 print STDERR "WARNING: $1 has no module defined, "
-                  . "it might not load!\n"
-                  . "\tGuessed it to $Foswiki::cfg{Plugins}{$1}{Module}\n";
+                    ."it might not load!\n"
+                    ."\tGuessed it to $Foswiki::cfg{Plugins}{$1}{Module}\n";
             }
             $Foswiki::cfg{Plugins}{$1}{Enabled} = 1;
         }
@@ -168,18 +191,6 @@ sub set_up {
     my $query = new Unit::Request();
     my $tmp = new Foswiki( undef, $query );
     $tmp->finish();
-
-    my %tempDirOptions = ( CLEANUP => 1 );
-    if ( $^O eq 'MSWin32' ) {
-
-        #on windows, don't make a big old mess of c:\
-        $ENV{TEMP} =~ /(.*)/;
-        $tempDirOptions{DIR} = $1;
-    }
-    $Foswiki::cfg{WorkingDir} = File::Temp::tempdir(%tempDirOptions);
-    mkdir("$Foswiki::cfg{WorkingDir}/tmp");
-    mkdir("$Foswiki::cfg{WorkingDir}/registration_approvals");
-    mkdir("$Foswiki::cfg{WorkingDir}/work_areas");
 
     # Move logging into a temporary directory
     $Foswiki::cfg{LogFileName} =
@@ -195,17 +206,69 @@ sub set_up {
     # (Core plugins may be disabled, but their initPlugin method will still
     # have been called when the first Foswiki object was created, above.)
     $this->loadExtraConfig(@_);
+}
 
-    _onceOnlyChecks();
+sub set_up_workingdir {
+    my $this = shift;
+    my %tempDirOptions = (
+        CLEANUP => 1
+    );
 
+    if ($^O eq 'MSWin32') {
+        #on windows, don't make a big old mess of c:\
+        $ENV{TEMP} =~ /(.*)/;
+        $tempDirOptions{DIR} = $1;
+    }
+    $Foswiki::cfg{WorkingDir} = File::Temp::tempdir( %tempDirOptions );
+    mkdir("$Foswiki::cfg{WorkingDir}/tmp");
+    mkdir("$Foswiki::cfg{WorkingDir}/registration_approvals");
+    mkdir("$Foswiki::cfg{WorkingDir}/work_areas");
+
+    return;
 }
 
 # Restores Foswiki::cfg and %ENV from backup
 sub tear_down {
     my $this = shift;
-    $this->{session}->finish() if $this->{session};
-    eval { File::Path::rmtree( $Foswiki::cfg{WorkingDir} ); };
+    my @list = (@set_up_list);
+
+    print __PACKAGE__ . "::tear_down()\n" if TRACE;
+    $this->SUPER::tear_down();
+    while (my $thing = pop(@list)) {
+        if (not $this->can('recycle') or not $this->recycle($thing)) {
+            print __PACKAGE__ . " Tearing down $thing\n" if TRACE;
+            eval "\$this->tear_down_$thing();";
+        } elsif (TRACE) {
+            print __PACKAGE__ . " NOT tearing down $thing, recycled\n";
+        }
+    }
+
+    return;
+}
+
+sub tear_down_session {
+    my $this = shift;
+
+    return $this->{session}->finish() if $this->{session};
+}
+
+sub tear_down_workingdir {
+    my $this = shift;
+
+    return eval { File::Path::rmtree( $Foswiki::cfg{WorkingDir} ); };
+}
+
+sub tear_down_config {
+    my $this = shift;
+
     %Foswiki::cfg = eval $this->{__FoswikiSafe};
+
+    return;
+}
+
+sub tear_down_env {
+    my $this = shift;
+
     foreach my $sym ( keys %ENV ) {
         unless ( defined( $this->{__EnvSafe}->{$sym} ) ) {
             delete $ENV{$sym};
@@ -215,11 +278,18 @@ sub tear_down {
         }
     }
 
+    return;
+}
+
+sub tear_down_meta {
+    my $this = shift;
     # Clear down non-default META types.
-    foreach my $thing ( keys %$Foswiki::Meta::VALIDATE ) {
+    foreach my $thing (keys %$Foswiki::Meta::VALIDATE) {
         delete $Foswiki::Meta::VALIDATE{$thing}
           unless $Foswiki::Meta::VALIDATE{$thing}->{_default};
     }
+
+    return;
 }
 
 sub _copy {
@@ -294,23 +364,20 @@ $result is the result of the function.
 sub capture {
     my $this = shift;
 
-    my ( $stdout, $stderr, $result ) = $this->captureSTD(@_);
+    my ($stdout, $stderr, $result) = $this->captureSTD(@_);
     my $fn = shift;
 
-    my $response =
+    my $response  =
       UNIVERSAL::isa( $_[0], 'Foswiki' )
       ? $_[0]->{response}
       : $Foswiki::Plugins::SESSION->{response};
 
     my $responseText = '';
-    if ( $response->outputHasStarted() ) {
-
+    if ($response->outputHasStarted()) {
         #we're streaming the output as we generate it
         #in 2010 (foswiki 1.1) this is used in the statistics script
         $responseText = $stdout;
-    }
-    else {
-
+    } else {
         # Capture headers
         require Foswiki::Engine;
         Foswiki::Engine->finalizeCookies($response);
@@ -323,8 +390,9 @@ sub capture {
         # Capture body
         $responseText .= $response->body() if $response->body();
     }
+    
 
-    return ( $responseText, $result, $stdout, $stderr );
+    return ($responseText, $result, $stdout, $stderr);
 }
 
 =begin TML
@@ -406,13 +474,11 @@ sub getUIFn {
     my $script = shift;
     require Foswiki::UI;
     $this->assert( $Foswiki::cfg{SwitchBoard}{$script}, $script );
-    $this->assert( $Foswiki::cfg{SwitchBoard}{$script}->{package},
-        "$script package not set" );
+    $this->assert($Foswiki::cfg{SwitchBoard}{$script}->{package}, "$script package not set");
     my $fn = $Foswiki::cfg{SwitchBoard}{$script}->{package};
     eval "require $fn";
-    die "DIED during (require $fn)\n" . $@ if $@;
-    $this->assert( $Foswiki::cfg{SwitchBoard}{$script}->{function},
-        "$script function not set" );
+    die "DIED during (require $fn)\n".$@ if $@;
+    $this->assert($Foswiki::cfg{SwitchBoard}{$script}->{function}, "$script function not set");
     $fn .= '::' . $Foswiki::cfg{SwitchBoard}{$script}->{function};
     return \&$fn;
 }
