@@ -2,16 +2,15 @@ package AddressTests;
 use strict;
 use warnings;
 
-use FoswikiTestCase;
+use FoswikiTestCase();
 our @ISA = qw( FoswikiTestCase );
 
 use Assert;
 use Data::Dumper;
 use Benchmark qw(:hireswallclock);
 use Foswiki::Address();
-use constant TRACE => 0;
+use constant TRACE => 1;
 
-my $FoswikiSESSION;
 my $test_web  = 'Temporary' . __PACKAGE__ . 'TestWeb';
 my %testrange = (
     webpath => [
@@ -237,60 +236,53 @@ my %testspec = (
 );
 my %rangetestitems;
 my %spectestitems;
-my $done_init;
 
 sub new {
     my ( $class, @args ) = @_;
     my $this = $class->SUPER::new(@args);
 
     $this->{test_web}   = $test_web;
-    $this->{test_topic} = 'TestTopic' . $class;
+    $this->{test_topic} = 'TestTopic';
     $this->gen_testrange_fns();
     $this->gen_testspec_fns();
 
     return $this;
 }
 
-sub set_up {
+# Fixture parts to recycle
+sub recycle {
+    my ($this, $fixture_part) = @_;
+
+    return 1;
+}
+
+sub set_up_session {
     my ($this) = @_;
+    my $query = Unit::Request->new("");
 
-    # We don't want the overhead of creating a new session for each tests
-    if ( not $done_init ) {
-        my $query = Unit::Request->new("");
-        $this->SUPER::set_up();
-        $query->path_info("/$this->{test_web}/$this->{test_topic}");
+    $query->path_info("/$this->{test_web}/$this->{test_topic}");
+    $this->{session} =
+      Foswiki->new( $Foswiki::cfg{AdminUserLogin}, $query );
 
-        #$this->{session}->finish();
-        $this->{session} =
-          Foswiki->new( $Foswiki::cfg{AdminUserLogin}, $query );
+    # SMELL: Why do I need to set this? I don't get our unit tests...
+    #$this->{session}->{webName} = $this->{test_web};
 
-        # SMELL: Why do I need to set this? I don't get our unit tests...
-        #$this->{session}->{webName} = $this->{test_web};
+    $this->{test_topicObject} = Foswiki::Meta->new(
+        $this->{session},    $this->{test_web},
+        $this->{test_topic}, "BLEEGLE\n"
+    );
 
-        $this->{test_topicObject} = Foswiki::Meta->new(
-            $this->{session},    $this->{test_web},
-            $this->{test_topic}, "BLEEGLE\n"
-        );
-
-        $this->gendata( \%testrange );
-        $Foswiki::Plugins::SESSION = $this->{session};
-        $FoswikiSESSION            = $this->{session};
-        $done_init                 = 1;
-    }
-    else {
-        $this->{session} = $FoswikiSESSION;
-
-        #$Foswiki::Plugins::SESSION = $this->{session};
-    }
+    $this->gendata( \%testrange );
+    $Foswiki::Plugins::SESSION = $this->{session};
 
     return;
 }
 
 # We don't want the overhead of creating a new session for each tests, so this
 # does nothing.
-sub tear_down {
-    return;
-}
+#sub tear_down {
+#    return;
+#}
 
 sub gendata {
     my ( $this, $range ) = @_;
@@ -440,20 +432,20 @@ sub gen_testspec_fns {
     return;
 }
 
-sub list_tests {
-    my ( $this, $suite ) = @_;
-    my @testnames;
-
-    if ( not scalar( keys %rangetestitems ) ) {
-        %rangetestitems = $this->gen_range_tests( \%testrange );
-        %spectestitems  = $this->gen_spec_tests( \%testspec );
-    }
-    foreach my $testname ( keys %rangetestitems, keys %spectestitems ) {
-        push( @testnames, __PACKAGE__ . '::test_' . $testname );
-    }
-
-    return @testnames, $this->SUPER::list_tests($suite);
-}
+#sub list_tests {
+#    my ( $this, $suite ) = @_;
+#    my @testnames;
+#
+#    if ( not scalar( keys %rangetestitems ) ) {
+#        %rangetestitems = $this->gen_range_tests( \%testrange );
+#        %spectestitems  = $this->gen_spec_tests( \%testspec );
+#    }
+#    foreach my $testname ( keys %rangetestitems, keys %spectestitems ) {
+#        push( @testnames, __PACKAGE__ . '::test_' . $testname );
+#    }
+#
+#    return @testnames, $this->SUPER::list_tests($suite);
+#}
 
 sub gen_range_tests {
     my ( $this, $range ) = @_;

@@ -373,6 +373,7 @@ sub runOne {
         print "*** No tests in $suite\n";
         return $action;
     }
+    $tester->set_up_run();
     foreach my $test (@tests) {
 
         Devel::Leak::Object::checkpoint() if CHECKLEAK;
@@ -402,6 +403,8 @@ sub runOne {
         };
         $tester->tear_down($test);
     }
+    $tester->tear_down_run();
+
     return $action;
 }
 
