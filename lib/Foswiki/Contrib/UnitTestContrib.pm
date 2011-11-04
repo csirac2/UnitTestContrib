@@ -14,10 +14,39 @@
 package Foswiki::Contrib::UnitTestContrib;
 
 use strict;
+use warnings;
 
-use vars qw( $VERSION $RELEASE $SHORTDESCRIPTION );
+our $VERSION = '$Rev$';
+our $RELEASE = '1.1';
+our $SHORTDESCRIPTION = 'Foswiki Unit-Test Framework';
 
-$VERSION = '$Rev$';
-$RELEASE = '1.1';
-$SHORTDESCRIPTION = 'Foswiki Unit-Test Framework';
+=begin TML
 
+---++ initPlugin($topic, $web, $user) -> $boolean
+
+Contribs don't normally use an initPlugin(), and on a 'normal' installation
+with UnitTestContrib installed, this init handler should remain unused.
+
+UnitTestContrib's WebserverTests, however, need to verify the versions of
+perl modules (Eg. CGI.pm, FCGI.pm, etc) as a part of its testing & reporting
+for the framework which starts & configures webservers for Selenium-based tests
+
+We can't rely on the unit test environment to report the same module versions
+as those which would be found inside the webserver environment (in theory, the
+temporary Foswiki installations we want to run Selenium against might not even
+be running from the same checkout as the unit test environment).
+
+So the WebserverTests write a new LocalSite.cfg which (among other things)
+enables UnitTestContrib as a plugin, which in turn registers rest handlers which
+can be called over http
+
+=cut
+
+sub initPlugin {
+    my ( $topic, $web, $user, $installWeb ) = @_;
+
+    require Foswiki::Contrib::UnitTestContrib::RestHandlers;
+    Foswiki::Contrib::UnitTestContrib::RESTHandlers::register();
+
+    return 1;
+}

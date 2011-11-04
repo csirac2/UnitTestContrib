@@ -1,0 +1,843 @@
+Stolen from http://foswiki.org/Support/NewApacheConfigGenerator?raw=on - let's try to keep them in sync
+<!-- Prevent accidental edit using WYSIWYG
+   * Set NOWYSIWYG = 1
+   * Set VIEW_TEMPLATE = Sandbox.TestTabbedView
+-->
+
+| *DRAFT DOCUMENT This is an early version of a new ApacheConfigGenerator.  it's not ready for use yet,  but feedback welcomed!* |
+   * *Objectives*
+      * Support =.htaccess= files
+      * Eliminate =Alias= and =ScriptAlias= directives
+      * Support more aggressive short URLs (eliminate /bin)
+      * %X% *Fix mod_perl config* which nearly works but is broken for redirects (subrequest issue)
+
+%JQREQUIRE{"chili"}%
+%STARTSECTION{"supplementaldoc"}%
+---+ Apache Config Generator
+This page creates an Apache configuration file =foswiki.conf= for your installation.  Fill out the form, and then press the *[Update Config File]* button.  Copy and paste the generated configuration into your Apache configuration file.
+
+For setting up %WIKITOOLNAME% on Linux or Unix, see also SettingFileAccessRightsLinuxUnix.  %X% *Caution:* If you used the Debian packages to install Foswiki, do not use the ApacheConfigGenerator.   Use the configuration files included in the .deb packages..
+<!--
+   * Set HTACCESS = %URLPARAM{"configtype" default="apache"}%
+   * Set REWRITE = %URLPARAM{"rewrite" default="on"}%
+   * Set ACTIONS = %URLPARAM{"actions" default=""}%
+   * Set ALIAS = %URLPARAM{"alias" default=""}%
+   * Set HOSTNAME = %URLPARAM{"hostname" default=""}%
+   * Set ALTHOST = %URLPARAM{"althost" default=""}%
+      * Set ALTURL = %FORMATLIST{"%ALTHOST%" split="\s+" separator=" " format="http://$1"}%
+   * Set VHOST = %URLPARAM{"vhost" default=""}%
+   * Set PORT = %URLPARAM{"port" default=""}%
+   * Set PATHVAR = %CALC{"$SUBSTITUTE(%URLPARAM{"dir" default="/var/www/foswiki"}%,/+$,,,r)"}%
+   * Set SUFFIX = %URLPARAM{"suffix" default=""}%
+   * Set SYMLINK = %URLPARAM{"symlink" default=""}%
+   * Set PATHURL = %CALC{"$SUBSTITUTE($SUBSTITUTE(%URLPARAM{"pathurl" default="/foswiki"}%,/+,/,,r),/+$,,,r)"}%
+      * Set URLREGEX = %CALC{"$SUBSTITUTE($SUBSTITUTE(%URLPARAM{"pathurl" default="/foswiki"}%,/+,/+,,r),/\+$,,,r)"}%
+   * Set SHORTURLS = %URLPARAM{"shorterurls" default="enabled"}%
+   * Set ENGINE = %URLPARAM{"engine" default="CGI"}%
+      * Set HANDLER = %CALC{$IF($EXACT($LOWER(%ENGINE%),fastcgi),%FASTCGI%,$IF($EXACT($LOWER(%ENGINE%),mod_perl),perl,$LOWER(%ENGINE%)))}%
+   * Set FASTCGI = %URLPARAM{"fastcgimodule" default="fastcgi"}%
+      * Set FCGI =%IF{"$ ENGINE = 'FastCGI'" then="/foswiki.fcgi" else=""}%
+   * Set APVER = %URLPARAM{"apver" default="2"}%
+   * Set ALLOWCONF = %URLPARAM{"allowconf" default=""}%
+   * Set REQUIRECONF = %URLPARAM{"requireconf" default=""}%
+   * Set REQANDOR = %URLPARAM{"reqandor" default="and"}%
+   * Set LOGINMANAGER = %URLPARAM{"loginmanager" default="None"}%
+   * Set HTPATH = %URLPARAM{"htpath" default=""}%
+   * Set ERRORDOCUMENT = %URLPARAM{"errordocument" default="UserRegistration"}%
+   * Set ERRORCUSTOM = %URLPARAM{"errorcustom" default=""}%
+   * Set BLOCKPHP = %URLPARAM{"blockmodphp" default="1"}%
+   * Set BLOCKPUBHTML = %URLPARAM{"blockpubhtml" default=""}%
+   * Set BLOCKTRASHPUB = %URLPARAM{"blocktrashpub" default=""}%
+   * Set CONTROLATTACH = %URLPARAM{"controlattach" default=""}%
+   * Set COMPRESSJSCSS = %URLPARAM{"compressjscss" default=""}%
+   * Set EXPIRESHDR = %URLPARAM{"expireshdr" default=""}%
+   * Set ETAGS = %URLPARAM{"etags" default=""}%
+   * Set BLOCKSCRIPTS = %URLPARAM{"blockscripts" default=""}%
+   * Set BLOCKSPIDERS = %URLPARAM{"blockspiders" default=""}%
+   * Set BLOCKGSASESS = %URLPARAM{"blockgsasess" default=""}%
+   * Set FOSWIKIVERSION = %URLPARAM{"foswikiversion" default="1.1"}%
+-->
+
+<form name="foswikiconf" action="%TOPICURL%#HighLight">
+
+---++ Foswiki version
+Generate configuration for Foswiki version <select name="foswikiversion">
+<option %IF{ "$ FOSWIKIVERSION='1.0'" then="selected=\"selected\""}%>1.0</option>
+<option %IF{ "$ FOSWIKIVERSION='1.1'" then="selected=\"selected\""}%>1.1</option>
+</select>
+
+   * A configuration created for 1.0 will still work with 1.1, but some new features may be missing from the configuration.
+   * A 1.1 configuration will work with 1.0, but 1.0 doesn't support all the features.
+
+---++ Base server information
+
+*Type of Configuration:* By default we will generate a config file that you can include in your Apache configuration =(httpd.conf)= Choose =.htaccess=  if you require =.htaccess= files to place in the Foswiki directories?i %BR%
+<blockquote>
+<input type="radio" name="configtype" value="apache" %IF{ "$ HTACCESS ='apache'" then="checked=\"checked\""}%>Configuration File</input>
+<input type="radio" name="configtype" value="htaccess" %IF{ "$ HTACCESS ='htaccess'" then="checked=\"checked\""}%> =.htaccess= Files</input>
+</blockquote>
+
+*Module availability:* For control of the CGI scripts and url rewriting,
+=mod_rewrite= is the preferred solution.   You can also choose =mod_actions=
+which is simpler but provides reduced functionality,  or traditional =Alias=
+and =ScriptAlias= statements which cannot be used in =.htaccess= files.
+=mod_rewrite= is recommended if available.
+<blockquote>
+<input type="checkbox" class="foswikiCheckbox" name="rewrite" value="on" %IF{ "$ REWRITE ='on'" then="checked=\"checked\""}%> =mod_rewrite= </input> - _(Recommended if available)_ <br />
+<input type="checkbox" class="foswikiCheckbox" name="actions" value="on" %IF{ "$ ACTIONS ='on'" then="checked=\"checked\""}%> =mod_actions= </input> - _(Not required if mod_rewrite is available)_ __not implemented__ <br />
+<input type="checkbox" class="foswikiCheckbox" name="alias" value="on" %IF{ "$ ALIAS ='on'" then="checked=\"checked\""}%> =mod_alias= </input> - _(Not supported in =.htaccess= files)_ __not implemented__ <br />
+</blockquote>
+
+*Host information:* Enter the fully qualified hostname that you will use to access your Foswiki.  (ex. =mywiki.com=)   You can also enter an optional port number.  (Port not needed on most systems)
+Also enter any alternate hostnames separated by spaces.  (ex. =www.mywiki.com static.mywiki.com=)
+<blockquote>
+Host Name: <input type="text" class="foswikiInputField" name="hostname" size="30" value="%HOSTNAME%" /> _optional_ &nbsp;&nbsp; Port: <input type="text" class="foswikiInputField" name="port" size="5" value="%PORT%" /> _optional_ %BR%%BR%
+Alternate Host Names: <input type="text" class="foswikiInputField" name="althost" size="50" value="%ALTHOST%" /> _optional_ %BR%
+Some servers use Name Based virtual hosting.   Check this option if you want to generate a virtual host statement:  _Ignored if you selected =.htaccess= files_ %BR%
+Generate =vhost=: <input type="checkbox" class="foswikiCheckbox" name="vhost" %IF{ "$ VHOST='on'" then="checked=\"checked\""}%/> _optional_
+</blockquote>
+
+*Installation directory:* Enter the full file path to your foswiki root directory:  It is recommended to choose an installation directory without spaces.  If your installation requires a script suffix, like =.pl= or =.cgi=, also specify that here.  For Linux/Unix servers, also indicate if Apache should follow symbolic links.  Also enter all paths including windows paths linux style, using forward slash. = 'C:/www/foswiki'=
+<blockquote>
+Path: <input type="text" class="foswikiInputField" name="dir" size="45" value="%PATHVAR%" /> _required, no spaces, omit trailing slash_ %BR%
+Will you require Symbolic Links in the =pub/= or =bin/= directories?  <input type="checkbox" class="foswikiCheckbox" name="symlink" %IF{ "$ SYMLINK='on'" then="checked=\"checked\""}%/>  _optional_ %BR%
+Script suffix: <input type="text" class="foswikiInputField" name="suffix" size="10" value="%SUFFIX%" /> _optional_ (ex. =.pl, .cgi=)
+</blockquote>
+
+*Foswiki URL:* Enter the url path required to access foswiki: %BR%(For shortest URL's, you can enter only the slash).%BR%
+<blockquote>
+URL Path: <input type="text" class="foswikiInputField" name="pathurl" size="45" value="%IF{"$ pathurl = '/'" then="/" else='%PATHURL%'}%" />   _required_
+</blockquote>
+
+*Short-URLs:* When you enable this, you can omit the =bin/view/= from view URLs, and optionally, the =bin/= prefix from all URLs.  Ex. use =domain.tld%PATHURL%/System/WebHome= instead of the normal =%HOSTNAME%%PATHURL%/bin/view/System/WebHome= %BR%
+<blockquote>
+<input type="radio" name="shorterurls" value="disabled" %IF{ "$ SHORTURLS ='disabled'" then="checked=\"checked\""}%>Disabled</input> - Full URLs - =/bin/view/Main/WebHome= <br />
+<input type="radio" name="shorterurls" value="enabled" %IF{ "$ SHORTURLS ='enabled'" then="checked=\"checked\""}%>Enabled</input> - Eliminate the =/bin/view= prefix%BR%
+<input type="radio" name="shorterurls" value="maximum" %IF{ "$ SHORTURLS ='maximum'" then="checked=\"checked\""}%>Maximum</input> - Eliminate =/bin/view= and =/bin= from all other URLs.<br />
+</blockquote>
+
+*Runtime Engine:* Choose the way foswiki is supposed to run (see Development.FoswikiStandAlone). Select CGI if in doubt. %BR%
+<blockquote>
+<input type="radio" name="engine" value="CGI" onchange="handleChange(this.value);" %IF{"$ ENGINE = 'CGI'" then="checked=\"checked\""}%> CGI </input>%BR%
+<input type="radio" name="engine" value="FastCGI" onchange="handleChange(this.value);" %IF{"$ ENGINE = 'FastCGI'" then="checked=\"checked\""}%> [[Extensions.FastCGIEngineContrib][FastCGI]] </input> %BR%
+<input type="radio" name="engine" value="mod_perl" onchange="handleChange(this.value);" %IF{"$ ENGINE = 'mod_perl'" then="checked=\"checked\""}%> [[Extensions.ModPerlEngineContrib][mod_perl]] </input>
+
+<div id="fastcgi_module">
+<nop>FastCGI module: <input type="radio" name="fastcgimodule" value="fastcgi" %IF{"$ FASTCGI = 'fastcgi'" then="checked=\"checked\""}%> mod_fastcgi </input> <input type="radio" name="fastcgimodule" value="fcgid" %IF{"$ FASTCGI = 'fcgid'" then="checked=\"checked\""}%> mod_fcgid </input>
+</div><div id="apache_version">
+Apache version: <input type="radio" name="apver" value="1" %IF{"$ APVER = '1'" then="checked=\"checked\""}%> 1.x </input> <input type="radio" name="apver" value="2" %IF{"$ APVER = '2'" then="checked=\"checked\""}%> 2.x </input>
+</div>
+
+<div id="perl_warning" style="padding: 1em; border: 3px solid red;">
+%X% Before you enable mod_perl in your webserver, you have to configure Foswiki. Otherwise, you'll face a chicken-and-egg problem, and would get something like this in your Apache error logs:
+<verbatim>[error] Content-type: text/plain\n\nPerl error when reading LocalSite.cfg: \nPlease inform the site admin.\nBEGIN failed--</verbatim>
+</div>
+</blockquote>
+<script type="text/javascript"><!--
+function setDisplayStyle (id, value) {
+    document.getElementById(id).style.display = value;
+}
+function handleChange(value) {
+    switch(value) {
+        case 'CGI':
+            setDisplayStyle("perl_warning", "none");
+            setDisplayStyle("fastcgi_module", "none");
+            setDisplayStyle("apache_version", "none");
+            break;
+        case 'FastCGI':
+            setDisplayStyle("perl_warning", "none");
+            setDisplayStyle("fastcgi_module", "block");
+            setDisplayStyle("apache_version", "none");
+            break;
+        case 'mod_perl':
+            setDisplayStyle("perl_warning", "block");
+            setDisplayStyle("fastcgi_module", "none");
+            setDisplayStyle("apache_version", "block");
+            break;
+    }
+}
+handleChange("%ENGINE%");
+--></script>
+
+---++ Security related settings
+---+++ Protect the =bin/configure= command
+It is strongly recommended that the configure script be protected.  It can be
+protected by IP address(es), User name(s) or both (cf.
+ProtectingYourConfiguration). If you require a valid user name, this user must
+exist in your =.htpasswd= file.   It should not be a WikiName that you
+establish with Foswiki registration.
+
+*Configure access:* Enter the IP address range(s) or hostname(s), and user name(s) that will have access to configure.  Separate multiple addresses, hostnames, or user names with spaces. IP addresses can be partial.  ex. 192.168.1
+<blockquote>
+IP Addresses / hostnames: <input type="text" class="foswikiInputField" name="allowconf" size="30" value="%ALLOWCONF%" />  _optional_  (example: =localhost 192.168.1.2 192.168.2=) %BR%
+<input type="radio" name="reqandor" value="or" %IF{"$ REQANDOR ='or'" then="checked=\"checked\""}%> OR  <input type="radio" name="reqandor" value="and" %IF{"$ REQANDOR ='and'" then="checked=\"checked\""}%> AND %BR%
+User names: <input type="text" class="foswikiInputField" name="requireconf" size="40" value="%REQUIRECONF%" /> (recommended) (example: =admin serveradmin localadmin=)
+</blockquote>
+
+---+++ Foswiki login support
+
+*User Authentication:* Choose your Login Manager:<br />
+<blockquote>
+<input type="radio" name="loginmanager" value="None" %IF{ "$ LOGINMANAGER ='None'" then="checked=\"checked\""}%> None - No login </input><br />
+<input type="radio" name="loginmanager" value="Template" %IF{ "$'URLPARAM{loginmanager}'='Template'" then="checked=\"checked\""}%> !TemplateLogin - Redirect to the Foswiki login template, which asks for a username and password in a form </input><br />
+<input type="radio" name="loginmanager" value="Apache" %IF{ "$'URLPARAM{loginmanager}'='Apache'" then="checked=\"checked\""}%> !ApacheLogin - Apache is configured to ask for authorization information </input><br /> Location of =.htpasswd= file: <input type="text" class="foswikiInputField" name="htpath" value="%HTPATH%" /> _optional_ (if blank, defaults to "%PATHVAR%/data"   omit trailing slash.)
+</blockquote>
+
+*Authentication failures:* Page to return when authentication fails:<br />
+<blockquote>
+<input type="radio" name="errordocument" value="UserRegistration" %IF{ "$ ERRORDOCUMENT='UserRegistration'" then="checked=\"checked\""}%> !UserRegistration </input><br />
+<input type="radio" name="errordocument" value="ResetPassword" %IF{ "$'URLPARAM{errordocument}'='ResetPassword'" then="checked=\"checked\""}%> !ResetPassword </input><br />
+<input type="radio" name="errordocument" value="None" %IF{ "$'URLPARAM{errordocument}'='None'" then="checked=\"checked\""}%> None. Use Apache default 401 message</input><br />
+<input type="radio" name="errordocument" value="Custom" %IF{ "$'URLPARAM{errordocument}'='Custom'" then="checked=\"checked\""}%> Custom: </input><input type="text" class="foswikiInputField" name="errorcustom" size="45" value="%ERRORCUSTOM%" /> (enter =Web/TopicName= )<br />
+Note:  A Custom Error Document must be entered per the Short URL setting. If Short URLs are enabled, do not include the =bin/view= in the path to the error document!
+</blockquote>
+
+---+++ Attachment Handling
+
+*PHP Control:* Prevent execution of attached files as PHP scripts:%BR%
+<blockquote>
+Check to block PHP: <input type="checkbox" class="foswikiCheckbox" name="blockmodphp" %IF{ "$ BLOCKPHP" then="checked=\"checked\""}%> _recommended against certain script attacks_
+</blockquote>
+
+*HTML Attachments:* Block direct access to viewing attachments that ends with .htm or .html: %BR%
+<blockquote>
+Check to block access: <input type="checkbox" class="foswikiCheckbox" name="blockpubhtml" %IF{ "$ BLOCKPUBHTML='on'" then="checked=\"checked\""}%> _recommended against spam abuse_
+</blockquote>
+
+*Trash Attachments:* Block direct access to viewing attachments in Trash web%BR%
+<blockquote>
+Check to block access: <input type="checkbox" class="foswikiCheckbox" name="blocktrashpub" %IF{ "$ BLOCKTRASHPUB='on'" then="checked=\"checked\""}%> _recommended against spam abuse_
+</blockquote>
+
+*Optimization* Several other settings to control or optimize attachment handling%BR%
+<blockquote>
+<table>
+<tr><td>JS/CSS Compression:</td><td><input type="checkbox" class="foswikiCheckbox" name="compressjscss" %IF{ "$ COMPRESSJSCSS='on'" then="checked=\"checked\""}%> _Serve compressed JS/CSS files - not suported by all browsers_ %BR% </td></tr>
+<tr><td>Expires header:</td><td><input type="checkbox" class="foswikiCheckbox" name="expireshdr" %IF{ "$ EXPIRESHDR='on'" then="checked=\"checked\""}%> _Set an Expires Header on pub/System files_ %BR% </td></tr>
+<tr><td>ETAGs:</td><td><input type="checkbox" class="foswikiCheckbox" name="etags" %IF{ "$ ETAGS='on'" then="checked=\"checked\""}%> _Omit Entity Tags (ETags) from HTTP Headers for attachments_ %BR% </td></tr>
+<tr><td>Block Scripts:</td><td><input type="checkbox" class="foswikiCheckbox" name="blockscripts" %IF{ "$ BLOCKSCRIPTS='on'" then="checked=\"checked\""}%> _Set file type to plain text for most common scripts_ %BR% </td></tr>
+</table>
+</blockquote>
+
+*Attachment protection:* In some installations it is important to protect attached files with the same access controls that are applied to the owning topic.  If this option is selected, the configuration will include some rewrite rules that redirect web access to attachments to the =bin/viewfile= script.
+   * Note that this option can have a significant impact on performance.
+   * Also, this option is incompatible with ImageGalleryPlugin as it writes to =/pub/images= which is not a valid web name.
+   * Viewfile sets the mime type based upon file name suffix.  Unknown types are served as =text/plain= which can result in corrupt files.
+   * _This option will also add some rewrite rules that bypass viewfile for certain graphics files - review the comments in the configuration carefully!_
+
+Do you want apply Foswiki access controls to attachments by redirecting access to the =viewfile= script? %BR%
+<blockquote>
+Check to control attachment access:  <input type="checkbox" class="foswikiCheckbox" name="controlattach" %IF{ "$ CONTROLATTACH='on'" then="checked=\"checked\""}%>  _optional_
+</blockquote>
+
+---+++ Spiders and Robots Control
+
+*Agent Blocking:* Do you want to include rules to block access from well known robot agents?  Note, the default list includes well known robots including Google. %BR%
+<blockquote>
+Check to deny access: <input type="checkbox" class="foswikiCheckbox" name="blockspiders" %IF{ "$ BLOCKSPIDERS='on'" then="checked=\"checked\""}%> (Recommended for public sites)
+</blockquote>
+
+*Robot Sessions:* Do you want to cause Foswiki to avoid creating CGI Session files for the enterprise Google Search Appliance?  (Foswiki 1.1 only)
+<blockquote>
+Check to Block GSA Sessions: <input type="checkbox" class="foswikiCheckbox" name="blockgsasess" %IF{ "$ BLOCKGSASESS='on'" then="checked=\"checked\""}%>
+</blockquote>
+
+<input type="submit" class="foswikiSubmit" value="Update config file" />
+</form>
+
+<!-- ====================== END OF INPUT FORM ===================== -->
+
+%IF{ "defined 'dir'" then='
+---++ foswiki.conf created from your data
+The text field below now contains a complete foswiki.conf file to be included from httpd.conf. In many distributions the foswiki.conf file is automatically included by placing it in the directory that contains the other included Apache config files. Typically in =/etc/httpd/conf.d= or =/etc/apache2/conf.d=
+
+You can also place it anywhere else add the following line to the end of your main httpd.conf file: =include "/path/to/foswiki.conf"=
+' else='
+---++ default foswiki.conf
+Press the "Update config file" button to generate your custom config
+'}%
+#HighLight
+By pressing the button below you select all the text in the textarea. Then you just need to copy the text to the clipboard and paste it into the =foswiki.conf= file.
+
+<form name="select_all">
+<input type="button" class="foswikiButton" value="Highlight Text" onClick="javascript:this.form.text_area.focus();this.form.text_area.select();">
+
+%CALC{$SET(port, $IF($EXACT(%PORT%,),,:%PORT%))}%
+
+<noautolink>
+<pre >
+<!-- ======================== START OF CONFIGURATION ================ -->
+
+<textarea name="text_area" rows="260" cols="200" readonly="readonly" style="width: 100%; font-family: monospace; font-size: 10pt;">%STARTSECTION{"confcode"}%
+# Autogenerated httpd.conf file for Foswiki.
+# Generated at
+# %SCRIPTURL{"view"}%/%WEB%/%TOPIC%?rewrite=%REWRITE%;actions=%ACTIONS%;alias=%ALIAS%;htaccess=%HTACCESS%;hostname=%HOSTNAME%;althost=%ALTHOST%;vhost=%VHOST%;port=%PORT%;dir=%PATHVAR%;symlink=%SYMLINK%;pathurl=%IF{"$ pathurl = '/'" then="/" else='%PATHURL%'}%;shorterurls=%SHORTURLS%;engine=%ENGINE%;fastcgimodule=%FASTCGI%;apver=%APVER%;allowconf=%ALLOWCONF%;requireconf=%REQUIRECONF%;reqandor=%REQANDOR%;loginmanager=%LOGINMANAGER%;htpath=%HTPATH%;errordocument=%ERRORDOCUMENT%;errorcustom=%ERRORCUSTOM%;blockmodphp=%BLOCKPHP%;blockpubhtml=%BLOCKPUBHTML%;blocktrashpub=%BLOCKTRASHPUB%;controlattach=%CONTROLATTACH%;compressjscss=%COMPRESSJSCSS%;expireshdr=%EXPIRESHDR%;etags=%ETAGS%;blockscripts=%BLOCKSCRIPTS%;blockspiders=%BLOCKSPIDERS%;foswikiversion=%FOSWIKIVERSION%;blockgsasess=%BLOCKGSASESS%
+
+# For Foswiki version %FOSWIKIVERSION%
+
+# When you visit http://%HOSTNAME%%PATHURL%/configure for the first time, these are the
+# configuration settings that are compatible with this configuration.  
+
+# {DefaultUrlHost}             http://%HOSTNAME%
+# {PermittedRedirectHostUrls}  %ALTURL%
+# {ScriptUrlPath}              %PATHURL%%IF{ "$ SHORTURLS ='maximum'" then='' else='/bin'}% 
+# {ScriptUrlPaths}{view}       %IF{ "$ SHORTURLS ='disabled'" then='$Foswiki::cfg{ScriptUrlPath}/view$Foswiki::cfg{ScriptSuffix}   (the default)' else="$percntPATHURL$percnt"}%
+# {ScriptDir}                  %PATHVAR%/bin
+# {PubUrlPath}                 %PATHURL%/pub
+# {PubDir}                     %PATHVAR%/pub
+# {DataDir}                    %PATHVAR%/data
+# {ToolsDir}                   %PATHVAR%/tools
+# {LocalesDir}                 %PATHVAR%/locale
+# {WorkingDir}                 %PATHVAR%/working
+
+
+%IF{ "$ VHOST ='on' and $ HTACCESS ='apache'" then='$percntINCLUDE{"%TOPIC%" section="vhost"}$percnt'}%
+%INCLUDE{"%TOPIC%" section="configRoot" }%
+%INCLUDE{"%TOPIC%" section="binDirectory" }%
+%INCLUDE{"%TOPIC%" section="pubDirectory" }%
+%IF{"defined blocktrashpub" then="$percntINCLUDE{\"%TOPIC%\" section=\"pubTrash\" }$percnt"}%
+
+# Security note: All other directories should be set so
+# that they are *not* visible as URLs, so we set them as =deny from all=.
+%INCLUDE{"%TOPIC%" section="subDirectory" dir="data" }%
+%INCLUDE{"%TOPIC%" section="subDirectory" dir="templates" }%
+%INCLUDE{"%TOPIC%" section="subDirectory" dir="lib" }%
+%INCLUDE{"%TOPIC%" section="subDirectory" dir="locale" }%
+%INCLUDE{"%TOPIC%" section="subDirectory" dir="tools" }%
+%INCLUDE{"%TOPIC%" section="subDirectory" dir="working"}%
+
+
+%IF{ "$ VHOST ='on' and $ HTACCESS ='apache'" then='</VirtualHost>'}%
+%ENDSECTION{"confcode"}%</textarea>
+</pre>
+</noautolink>
+</form>
+%ENDSECTION{"supplementaldoc"}%
+
+----
+
+---++ Comments
+<!--
+"AddType text/plain .shtml .php .php3 .phtml .phtm .pl .py .cgi"
+
+Be aware that this directive introduces an issue if for example you have the associated html page for the wysiwyg editor, as the text/html document will have text/plain mime type. Maybe wise to limit the coverage of the directory or location.
+
+Comment removed out by C. - the mime type of the wysiwyg data document is irrelevant to this directive. AddType deals with *file extensions*
+See http://httpd.apache.org/docs/2.2/mod/mod_mime.html#addtype
+-->
+
+---+++ History
+   * Originally crafted and regularly maintained by Main.KennethLavrsen
+   * removed the handy W3C tools from the blocked list. -- Main.WillNorris - 18 Feb 2009
+   * ending % was missing for a %PATHURL in a ScriptAlias declaration -- Main.ColasNahaboo - 23 Feb 2009
+   * Noted can't use a configure user as an editing wiki user -- Main.MartinCleaver - 23 Mar 2009
+   * Remove /bin/view from the ErrorDocument strings if shorturls enabled - otherwise Apache fails to prompt for password - 5 Apr 2009
+   * Disabled TinyMCE plugin as it messes up with the layout -- Main.OlivierRaginel - 06 Apr 2009
+   * Reorganized, added support for protecting attachments,  FollowSymLinks  -- Main.GeorgeClark - 11 Apr 2009
+   * Simplified viewfile regex - should fix compile failure on Apache startup.
+   * Allow any wiki topic to be specified as the not-authorized page
+   * Allow location of .htpasswd to be overridden
+   * Add an optional port # for the Virtual host.    So you can specify :80, :443, or whatever on the statement.
+   * Fixed htpasswd to default to data directory if left blank, otherwise overrides path - 3 Sept 2009
+   * Added (commented out) rules for serving pre-compressed .js and .css -- Main.MichaelTempest - 22 Sep 2009
+   * Moved !LocationMatch for fcgi outside of the directory.
+   * Add an Alias statement for robots.txt when short URLs are enabled
+   * Add or/and configuration of access control to =bin/configure= command -- Main.TobiasVonDerKrone - 11 Dec 2009
+   * Fixed the urlpath element so that it roundtrips without adding a bogus leading space  -- Main.MartinCleaver - 11 Feb 2010
+   * Added =ErrorDocument 401 default= for bin/configure,   so it doesn't rewrite to the bin/view and cause other errors - 9 July 2010
+   * Added NO_FOSWIKI_SESSION for protection against hungry spiders - Main.AndrewJones - 14 July 2010
+   * Block either all of mod_php3, mod_php4, mod_php5 or none - don't ask the user to pick (and use ifmodule so that apache won't die when mod_php* isn't enabled) -- Main.PaulHarvey - 11 Oct 2010
+   * Working with Main.GeorgeClark, improve support for when wiki installation is not at root of domain (ie. hosted in subdirectory). Also, adjusted !RewriteRules so they don't 'fall-through' to any URI based on =%REQUEST_URI= - because that isn't how we build a path to a file on the filesystem, when the URL path doesn't match up with FS path... -- Main.PaulHarvey - 11 Oct 2010
+   * Folded unnecessary !RewriteCond's into regex !RewriteRules, these were causing everything to go to viewfile on a particular setup combination; change to !PerlModule as noted in [[Tasks.Item9139]] (!) -- Main.PaulHarvey - 15 Oct 2010
+   * Moved file passthru check to after the bin/configure rewrite rule, otherwise bin/configure is detectes as a file, and is not handled as a cgi script.
+   * Also separated internal request passthru from file passthru.   File passthru needs explicit path for systems where Foswiki is not installed in the document root. -- Main.GeorgeClark - 23 Sep 2011
+
+----
+
+---++ Wanted improvements.
+   * For ShortURLs, I had to (at least for what I'm doing at SSLForNonViewScriptsOnly), add =Alias /error/ "/usr/share/apache2/error/"= above =Alias / "/srv/www/vhosts/wiki.trin.org.au/foswiki/bin/view/"=
+   * Handle modules needed for LDAP library inclusions -- Main.MartinCleaver - 11 Feb 2010
+   * Template Login should be enable by default on "Choose your Login Manager".
+   * There should be a really basic configuration file ready to download and explained for newbies - %RED% there is the httpd.conf.txt at the root of the release %ENDCOLOR%
+
+---++ Configuration parts
+
+---+++ Virtual Host
+<verbatim class="tml">
+%STARTSECTION{"vhost"}%
+<VirtualHost *%CALC{$GET(port)}% >
+    ServerAdmin webmaster@%HOSTNAME%
+    DocumentRoot %PATHVAR%
+    ServerName %HOSTNAME% %IF{ "$ ALTHOST !=''" then='$n    ServerAlias %ALTHOST%'}%
+%ENDSECTION{"vhost"}%
+</verbatim>
+
+
+---+++ Server root
+<verbatim class="tml">
+%STARTSECTION{"configRoot"}%
+%IF{ "$ HTACCESS ='htaccess'" then='# ========= CUT HERE - save the below text into: %PATHVAR%/.htaccess  ========='}%
+
+%INCLUDE{"%TOPIC%" section="mod_rewrite"}%
+
+%CALC{$SET(binview, $IF($EXACT(%SHORTURLS%,disabled),/bin/view,))}%
+%CALC{$SET(symlink, $IF($EXACT(%SYMLINK%,on),+FollowSymLinks,-FollowSymLinks))}%
+
+
+%IF{ "$'URLPARAM{loginmanager}'='Apache' AND $ENGINE = 'FastCGI'" then='
+    # When using Apache type login the following defines the Foswiki scripts
+    # that makes Apache ask the browser to authenticate. It is correct that
+    # scripts such as view are not authenticated.  This has to be LocationMatch because
+    # the scripts are not accessed as files.
+    <LocationMatch "^%URLREGEX%%IF{" $ SHORTURLS ='maximum'" then='' else='/+bin'}%/+(attach|edit|manage|rename|save|upload|mail|logon|rest|.*auth).*">
+       Require valid-user
+    </LocationMatch>
+'}%
+%IF{"defined blockpubhtml" then='
+# Block access to typical spam related attachments
+# Except the Foswiki directory which is read only and does have attached html files.
+SetEnvIf Request_URI "%PATHURL%/+pub/+.*\.[hH][tT][mM][lL]?$" blockAccess
+SetEnvIf Request_URI "%PATHURL%/+pub/+System/+.*\.[hH][tT][mM][lL]?$" !blockAccess
+'}%
+%INCLUDE{"%TOPIC%" section="blockAccess"}%
+%IF{"$ ENGINE = 'mod_perl'" then='$percntINCLUDE{"%TOPIC%" section="modPerl"}$percnt'}%
+%IF{"$ ENGINE = 'FastCGI'" then='%IF{"$ FASTCGI = 'fastcgi'" then='$percntINCLUDE{"%TOPIC%" section="modFastcgi"}$percnt' else='$percntINCLUDE{"%TOPIC%" section="modFcgid"}$percnt '}%'}%
+%INCLUDE{"%TOPIC%" section="rootDirectory"}%
+%IF{ "$ HTACCESS ='htaccess'" then='# ========= CUT HERE ========='}%
+%ENDSECTION{"configRoot"}%
+</verbatim>
+
+
+---+++ subDirectory
+<verbatim class="tml">
+%STARTSECTION{"subDirectory"}%
+%IF{ "$ HTACCESS ='htaccess'" then='# ========= CUT HERE - save the below text into: into %PATHVAR%/%dir%/.htaccess =========
+# Deny all access
+Deny from all
+# ========= END FILE' else='<Directory "%PATHVAR%/%dir%">
+    deny from all
+</Directory>'}% %ENDSECTION{"subDirectory"}%
+</verbatim>
+
+
+---+++ pubDirectory
+<verbatim class="tml">
+%STARTSECTION{"pubDirectory"}%
+%IF{ "$ HTACCESS ='htaccess'" then='# ========= CUT HERE - save the below text into: %PATHVAR%/pub/.htaccess ========='}%
+# This sets the options on the pub directory, which contains attachments and
+# other files like CSS stylesheets and icons. AllowOverride None stops a
+# user installing a .htaccess file that overrides these options.
+# Note that files in pub are *not* protected by Foswiki Access Controls,
+# so if you want to control access to files attached to topics you need to
+# block access to the specific directories same way as the ApacheConfigGenerator
+# blocks access to the pub directory of the Trash web
+%IF{ "$ HTACCESS ='apache'" then='<Directory "%PATHVAR%/pub">'}%
+    Options None
+    Options %CALC{$GET(symlink)}%
+    AllowOverride None
+    Order Allow,Deny
+    Allow from all
+    Deny from env=blockAccess
+    ErrorDocument 404 %PATHURL%%IF{ "$ SHORTURLS ='maximum'" then='' else='/bin'}%/viewfile
+%IF{ "$ BLOCKPHP" then="
+    # Disable execution of PHP scripts
+    <ifmodule mod_php3.c>
+        php3_engine off
+    </ifmodule>
+    <ifmodule mod_php4.c>
+        php_admin_flag engine off
+    </ifmodule>
+    <ifmodule mod_php5.c>
+        php_admin_flag engine off
+    </ifmodule>
+"}%
+
+   %IF{"$ BLOCKSCRIPTS = 'on'" then='
+    # This line will redefine the mime type for the most common types of scripts
+    AddType text/plain .shtml .php .php3 .phtml .phtm .pl .py .cgi'}%
+
+   %IF{"$ EXPIRESHDR = 'on'" then='
+   #add an Expires header that is sufficiently in the future that the browser does not even ask if its uptodate
+   # reducing the load on the server significantly
+   #IF you can, you should enable this - it _will_ improve your Foswiki experience, even if you set it to under one day.
+   # you may need to enable expires_module in your main apache config
+   #LoadModule expires_module libexec/httpd/mod_expires.so
+   #AddModule mod_expires.c
+   <ifmodule mod_expires.c>
+     <filesmatch "\.(jpe?g|gif|png|css(\.gz)?|js(\.gz)?|ico)$">
+          ExpiresActive on
+          ExpiresDefault "access plus 11 days"
+      </filesmatch>
+   </ifmodule>'}%
+
+    %IF{"$ ETAGS = 'on'" then='
+    # Disabling ETags (Entity Tags) reduces the size of HTTP Headers
+      FileETag none'}%
+
+    %IF{"$ COMPRESSJSCSS = 'on'" then='
+   # Serve pre-compressed versions of .js and .css files, if they exist
+   # Some browsers do not handle this correctly, which is why it is disabled by default
+    <FilesMatch "\.(js|css)$">
+            RewriteEngine on
+            RewriteCond %{HTTP:Accept-encoding} gzip
+            RewriteCond %{REQUEST_FILENAME}.gz -f
+            RewriteRule ^(.*)$ %{REQUEST_URI}.gz [L,QSA]
+    </FilesMatch>
+    <FilesMatch "\.(js|css)\?.*$">
+            RewriteEngine on
+            RewriteCond %{HTTP:Accept-encoding} gzip
+            RewriteCond %{REQUEST_FILENAME}.gz -f
+            RewriteRule ^([^?]*)\?(.*)$ $1.gz?$2 [L]
+    </FilesMatch>
+    <FilesMatch "\.js\.gz(\?.*)?$">
+            AddEncoding x-gzip .gz
+            AddType application/x-javascript .gz
+    </FilesMatch>
+    <FilesMatch "\.css\.gz(\?.*)?$">
+            AddEncoding x-gzip .gz
+            AddType text/css .gz
+    </FilesMatch>'}%
+
+%IF{ "$ HTACCESS ='apache'" then='</Directory>' else='# ========= CUT HERE ========='}%
+%ENDSECTION{"pubDirectory"}%
+</verbatim>
+
+
+---+++ binDirectory
+<verbatim class="tml">
+%STARTSECTION{"binDirectory"}%
+%IF{ "$ HTACCESS ='htaccess'" then='# ========= CUT HERE - save the below text into:  %PATHVAR%/bin/.htaccess ========='}%
+# This specifies the options on the Foswiki scripts directory. The ExecCGI
+# and SetHandler tell apache that it contains scripts. "Allow from all"
+# lets any IP address access this URL.
+# Note:  If you use SELinux, you also have to "Allow httpd cgi support" in your SELinux policies
+
+%IF{ "$ HTACCESS ='apache'" then='<Directory "%PATHVAR%/bin">'}%
+    AllowOverride None
+    Order Allow,Deny
+    Allow from all
+    Deny from env=blockAccess
+%IF{"$ ENGINE = 'mod_perl'" then='
+    Options +ExecCGI %CALC{$GET(symlink)}%
+    <IfModule mod_perl.c>
+        SetHandler perl-script
+        Perl%IF{"$ APVER = '2'" then="Response"}%Handler Foswiki::Engine::Apache
+    </IfModule>
+' else='
+    Options +ExecCGI  %CALC{$GET(symlink)}%
+    SetHandler cgi-script'}%%IF{"$ ENGINE = 'FastCGI'" then='
+    <Files "foswiki.fcgi">
+        SetHandler %FASTCGI%-script
+    </Files>
+'}%
+
+    # Password file for Foswiki users
+%IF{"$ HTPATH = ''" then='    AuthUserFile %PATHVAR%/data/.htpasswd' else='    AuthUserFile %HTPATH%/.htpasswd'}%
+    AuthName 'Enter your WikiName: (First name and last name, no space, no dots, capitalized, e.g. JohnSmith). Cancel to register if you do not have one.'
+    AuthType Basic
+%IF{ "$ ERRORDOCUMENT ='UserRegistration'" then='
+    # File to return on access control error (e.g. wrong password)
+    ErrorDocument 401 %PATHURL%%CALC{$GET(binview)}%/System/UserRegistration
+'}%%IF{ "$ ERRORDOCUMENT='ResetPassword'" then='
+    # File to return on access control error (e.g. wrong password)
+    ErrorDocument 401 %PATHURL%%CALC{$GET(binview)}%/System/ResetPassword
+'}%%IF{ "$ ERRORDOCUMENT='Custom'" then='
+    # File to return on access control error (e.g. wrong password)
+    ErrorDocument 401 %PATHURL%%CALC{$GET(binview)}%/%ERRORCUSTOM%
+'}%
+    # Limit access to configure to specific IP address(es) %IF{ "$REQANDOR='and'" then="and" else="or" }% user(s).
+    # Make sure configure is not open to the general public.
+    # It exposes system details that can help attackers.
+    # cf. http://foswiki.org/Support/ProtectingYourConfiguration for details.
+    <FilesMatch "^(configure.*)$">
+        SetHandler cgi-script%IF{ "$ALLOWCONF != ''" then="
+        Order Deny,Allow
+        Deny from all
+        Allow from %URLPARAM{allowconf}%"}%
+        %IF{ "$REQUIRECONF != ''" then="Require user %URLPARAM{requireconf}%"}%
+        Satisfy %IF{ "$REQANDOR='and'" then="All" else="Any" }%
+        ErrorDocument 401 default
+    </FilesMatch>
+%IF{ "$'URLPARAM{loginmanager}'='Apache' AND $ENGINE != 'FastCGI'" then="
+    # When using Apache type login the following defines the Foswiki scripts
+    # that makes Apache ask the browser to authenticate. It is correct that
+    # scripts such as view are not authenticated.
+    <FilesMatch \"(attach|edit|manage|rename|save|upload|mail|logon|rest|.*auth).*\">
+        Require valid-user
+    </FilesMatch>"}%
+%IF{ "$ HTACCESS ='apache'" then='</Directory>' else='# ========= CUT HERE ========='}%
+%ENDSECTION{"binDirectory"}%
+
+</verbatim>
+---+++ rootDirectory
+<verbatim class="tml">
+%STARTSECTION{"rootDirectory"}%
+# This enables access to the documents in the Foswiki root directory
+%IF{ "$ HTACCESS ='apache'" then='<Directory "%PATHVAR%">'}%
+    Order Allow,Deny
+    Allow from all
+    Deny from env=blockAccess
+%IF{ "$ HTACCESS ='apache'" then='</Directory>'}%
+%ENDSECTION{"rootDirectory"}%
+
+</verbatim>
+---+++ pubTrash
+<verbatim class="tml">
+%STARTSECTION{"pubTrash"}%
+%IF{ "$ HTACCESS ='htaccess'" then='# ========== Cut here and paste into "%PATHVAR%/pub/Trash/.htaccess"'}%
+# Spammers are known to attach their stuff and then move it to trash where it remains unnoticed.
+# We prevent viewing any attachments directly from pub
+%IF{ "$ HTACCESS ='apache'" then='<Directory "%PATHVAR%/pub/Trash">'}%
+    deny from all
+%IF{ "$ HTACCESS ='apache'" then='</Directory>' else='# ========= CUT HERE ========='}%
+%ENDSECTION{"pubTrash"}%
+
+</verbatim>
+
+----+++ Modules
+---++++ mod_rewrite
+<verbatim class="tml">
+%STARTSECTION{"mod_rewrite"}%
+RewriteEngine    on
+
+# Rewrite logging is costly, recommend to use sparingly and enably only when
+# required.  CAUTION:  If the path to the log file is not present, or the log
+# file is not writable by Apache, the server will not start.
+#RewriteLog "%PATHVAR%/working/logs/rewrite.log"
+#RewriteLogLevel 0
+
+# Don't rewrite the default apache error documents.
+# NOTE:  The location of the standard apache error directory may need to be
+# adjusted for your server.
+RewriteRule ^/error/(.*) /usr/share/apache2/error/$1 [L,NS]
+
+%IF{ "$ CONTROLATTACH='on'" then='
+#
+#  Protect attachments by rewriting to the "viewfile" script
+#
+
+#  Permit some safe exceptions to avoid viewfile overhead
+#  Any gif/jpg/ico in /pub, and any files in /pub/System or any WebPreferences:
+#  pass through unmodified
+#   - uncomment first line to allow access to ImageGalleryPlugin cache.
+#RewriteCond  %{REQUEST_URI} ^%URLREGEX%/+pub/+images/+.*$ [OR]
+RewriteCond  %{REQUEST_URI} ^%URLREGEX%/+pub/+[^/]+\.(gif|png|jpe?g|ico)$  [NC,OR]
+RewriteCond  %{REQUEST_URI} ^%URLREGEX%/+pub/+System/+(.*)$  [OR]
+RewriteCond  %{REQUEST_URI} ^%URLREGEX%/+pub/+([^/]+/+)+WebPreferences/+([^/]+)$
+RewriteRule ^%URLREGEX%/+pub/+(.*)$ %PATHVAR%/pub/$1 [L]'}%
+
+%IF{ "$ CONTROLATTACH='on' and $ SHORTURLS='disabled'" then='
+# These exceptions can help performance but are risky.  Permit some user content to bypass viewfile
+# Any gif, ico, png or jpg in any sub-directory of pub
+# that has the view script as the referrer (Can be spoofed!)
+# pass through unmodified.  (If desired, uncomment all 3 lines)
+# Note that this does not work for short URLs because the referrer cannot be determined.
+#RewriteCond  %{HTTP_REFERER} ^http://%VHOST%%PATHURL%/bin/view.*
+#RewriteCond  %{REQUEST_URI} ^%URLREGEX%/+pub/+([^/]+/)+([^/]+)\.(gif|ico|png|jpe?g)$ [NC]
+#RewriteRule ^%URLREGEX%/+pub/+(.*)$ %PATHVAR%/pub/$1 [L]
+'}%
+
+%IF{ "$ CONTROLATTACH='on'" then=' # If it makes it here, rewrite as viewfile
+RewriteRule ^%URLREGEX%/+pub/+(.*)$ %PATHVAR%/bin%FCGI%/viewfile/$1 [L,NS,H=%HANDLER%-script]
+' else=' # pub files are served directly by Apache, not by Foswiki
+RewriteRule ^%URLREGEX%/+pub/+(.*)$ %PATHVAR%/pub/$1 [L]
+'}%
+
+# These rewrite rules redirect the user to the shorter URL
+%IF{" $ SHORTURLS ='enabled' or $ SHORTURLS ='maximum'" then='# Shorten the URL if the user forgot
+RewriteRule ^%URLREGEX%/+bin/+view/+(.*) %PATHURL%/$1 [L,NE,R]
+RewriteRule ^%URLREGEX%/+view/+(.*) %PATHURL%/$1 [L,NE,R]
+RewriteRule ^%URLREGEX%/+bin/+view$ %PATHURL%/ [L,NE,R]
+RewriteRule ^%URLREGEX%/+view$ %PATHURL%/ [L,NE,R]'}%
+%IF{" $ SHORTURLS ='maximum'" then='RewriteRule ^%URLREGEX%/+bin/+(.*) %PATHURL%/$1 [L,NE,R]'}%
+
+# The below rewrite rules containing a fully qualified path in the substitution instruct the
+# server which file/script to use and do not result in a redirect to the user.  They serve
+# the same purpose as the "Alias" and/or "ScriptAlias" statements.
+
+#  Make sure that configure is handled as a cgi script
+%IF{" $ SHORTURLS ='maximum'" then='RewriteCond %{REQUEST_URI} ^%URLREGEX%/+configure' else='RewriteCond %{REQUEST_URI} ^%URLREGEX%/+bin/+configure'}%
+RewriteRule . %PATHVAR%/bin/configure [L,NS,H=cgi-script]
+
+# internal request are served as usual
+RewriteCond %{IS_SUBREQ} ^true$
+RewriteRule . - [L]
+
+# Default the homepage
+RewriteRule ^/$ %PATHVAR%/bin%FCGI%/view/ [L,NS,H=%HANDLER%-script]
+
+# uri's of the form /script/... are passed to the right script
+%IF{" $ SHORTURLS ='maximum'" then='RewriteCond %{REQUEST_URI} ^%URLREGEX%/+([^/]+)(.*)$' else='RewriteCond %{REQUEST_URI} ^%URLREGEX%/+bin/+([^/]+)(.*)$ '}%
+RewriteCond %PATHVAR%/bin/%1 -f
+RewriteRule . %PATHVAR%/bin%FCGI%/%1%2 [L,NS,H=%HANDLER%-script]
+
+# existing static files are served as usual
+#  - lets files like robots.txt, etc pass through
+RewriteCond %{REQUEST_URI} ^%URLREGEX%/+(.*)$
+RewriteCond %PATHVAR%/%1 -f
+RewriteRule . %PATHVAR%/%1 [L]
+
+# Everthing else is just viewed
+RewriteRule ^%URLREGEX%/+(.*)$ %PATHVAR%/bin%FCGI%/view/$1 [L,NS,H=%HANDLER%-script]
+%ENDSECTION{"mod_rewrite"}%
+</verbatim>
+----++++ mod_perl
+<verbatim class="tml">
+%STARTSECTION{"modPerl"}%
+<IfModule mod_perl.c>%IF{"$ APVER = '2'" then='
+PerlSwitches -wT' else='
+PerlTaintCheck On
+PerlWarn On'}%
+# Explicit Pre or Post is recommended over PerlRequire.  Post seems to be reliable.
+PerlPostConfigRequire %PATHVAR%/tools/mod_perl_startup.pl
+</IfModule>
+%ENDSECTION{"modPerl"}%
+</verbatim>
+
+----++++ mod_fastcgi
+<verbatim class="tml">
+%STARTSECTION{"modFastcgi"}%
+<IfModule mod_fastcgi.c>
+    # Commenting the next setting makes foswiki to be a dynamic server, loaded on demand.
+    # Adjust the number of servers to your needs
+    FastCgiServer %PATHVAR%/bin/foswiki.fcgi -processes 3
+
+    # Running an external server on the same machine:
+    #FastCgiExternalServer %PATHVAR%/bin/foswiki.fcgi -socket /path/to/foswiki.sock
+
+    # Or at another machine:
+    #FastCgiExternalServer %PATHVAR%/bin/foswiki.fcgi -host example.com:8080
+
+    # Refer to details at http://www.fastcgi.com/mod_fastcgi/docs/mod_fastcgi.html
+</IfModule>
+%ENDSECTION{"modFastcgi"}%
+</verbatim>
+
+----++++ mod_fcgid
+<verbatim class="tml">
+%STARTSECTION{"modFcgid"}%
+<IfModule mod_fcgid.c>
+
+    # Maximum fcgi handlers allowed
+    FcgidMaxProcessesPerClass 50
+    # Timeout for FCGI script - may need to be increased for long-running searches.
+    FcgidIOTimeout 30
+
+    # Refer to details at http://httpd.apache.org/mod_fcgid/mod/mod_fcgid.html
+</IfModule>
+%ENDSECTION{"modFcgid"}%
+</verbatim>
+
+---+++ blockAccess
+<verbatim class="tml">
+%STARTSECTION{"blockAccess"}%
+# We set an environment variable called blockAccess.
+#
+# Setting a BrowserMatchNoCase to ^$ is important. It prevents Foswiki from
+# including its own topics as URLs and also prevents other Foswikis from
+# doing the same. This is important to prevent the most obvious
+# Denial of Service attacks.
+#
+# You can expand this by adding more BrowserMatchNoCase statements to
+# block evil browser agents trying to crawl your Foswiki
+#
+# Example:
+# BrowserMatchNoCase ^SiteSucker blockAccess
+# BrowserMatchNoCase ^$ blockAccess
+
+%IF{ "$ BLOCKSPIDERS ='on'" then='$percntINCLUDE{"%TOPIC%" section="blockSpiders"}$percnt'}%
+%IF{"$FOSWIKIVERSION>1.0 and $BLOCKGSASESS='on'" then='$percntINCLUDE{"%TOPIC%" section="NO_FOSWIKI_SESSION"}$percnt'}%
+
+BrowserMatchNoCase ^$ blockAccess
+%ENDSECTION{"blockAccess"}%
+</verbatim>
+
+
+---+++ blockSpiders
+<verbatim class="tml">
+%STARTSECTION{"blockSpiders"}%
+BrowserMatchNoCase ^Accoona blockAccess
+BrowserMatchNoCase ^ActiveAgent blockAccess
+BrowserMatchNoCase ^Attache blockAccess
+BrowserMatchNoCase BecomeBot blockAccess
+BrowserMatchNoCase ^bot blockAccess
+BrowserMatchNoCase Charlotte/ blockAccess
+BrowserMatchNoCase ^ConveraCrawler blockAccess
+BrowserMatchNoCase ^CrownPeak-HttpAgent blockAccess
+BrowserMatchNoCase ^EmailCollector blockAccess
+BrowserMatchNoCase ^EmailSiphon blockAccess
+BrowserMatchNoCase ^e-SocietyRobot blockAccess
+BrowserMatchNoCase ^Exabot blockAccess
+BrowserMatchNoCase ^FAST blockAccess
+BrowserMatchNoCase ^FDM blockAccess
+BrowserMatchNoCase ^GetRight/6.0a blockAccess
+BrowserMatchNoCase ^GetWebPics blockAccess
+BrowserMatchNoCase ^Gigabot blockAccess
+BrowserMatchNoCase ^gonzo1 blockAccess
+BrowserMatchNoCase ^Google\sSpider blockAccess
+BrowserMatchNoCase ^ichiro blockAccess
+BrowserMatchNoCase ^ie_crawler blockAccess
+BrowserMatchNoCase ^iGetter blockAccess
+BrowserMatchNoCase ^IRLbot blockAccess
+BrowserMatchNoCase Jakarta blockAccess
+BrowserMatchNoCase ^Java blockAccess
+BrowserMatchNoCase ^KrakSpider blockAccess
+BrowserMatchNoCase ^larbin blockAccess
+BrowserMatchNoCase ^LeechGet blockAccess
+BrowserMatchNoCase ^LinkWalker blockAccess
+BrowserMatchNoCase ^Lsearch blockAccess
+BrowserMatchNoCase ^Microsoft blockAccess
+BrowserMatchNoCase MJ12bot blockAccess
+BrowserMatchNoCase MSIECrawler blockAccess
+BrowserMatchNoCase ^MSRBOT blockAccess
+BrowserMatchNoCase ^noxtrumbot blockAccess
+BrowserMatchNoCase ^NutchCVS blockAccess
+BrowserMatchNoCase ^RealDownload blockAccess
+BrowserMatchNoCase ^Rome blockAccess
+BrowserMatchNoCase ^Roverbot blockAccess
+BrowserMatchNoCase ^schibstedsokbot blockAccess
+BrowserMatchNoCase ^Seekbot blockAccess
+BrowserMatchNoCase ^SiteSnagger blockAccess
+BrowserMatchNoCase ^SiteSucker blockAccess
+BrowserMatchNoCase ^Snapbot blockAccess
+BrowserMatchNoCase ^sogou blockAccess
+BrowserMatchNoCase ^SpiderKU blockAccess
+BrowserMatchNoCase ^SpiderMan blockAccess
+BrowserMatchNoCase ^Squid blockAccess
+BrowserMatchNoCase ^Teleport blockAccess
+BrowserMatchNoCase ^User-Agent\: blockAccess
+BrowserMatchNoCase VoilaBot blockAccess
+BrowserMatchNoCase ^voyager blockAccess
+BrowserMatchNoCase ^w3search blockAccess
+BrowserMatchNoCase ^Web\sDownloader blockAccess
+BrowserMatchNoCase ^WebCopier blockAccess
+BrowserMatchNoCase ^WebDevil blockAccess
+BrowserMatchNoCase ^WebSec blockAccess
+BrowserMatchNoCase ^WebVac blockAccess
+BrowserMatchNoCase ^Webwhacker blockAccess
+BrowserMatchNoCase ^Webzip blockAccess
+BrowserMatchNoCase ^Wells blockAccess
+BrowserMatchNoCase ^WhoWhere blockAccess
+BrowserMatchNoCase www\.netforex\.org blockAccess
+BrowserMatchNoCase ^WX_mail blockAccess
+BrowserMatchNoCase ^yacybot blockAccess
+BrowserMatchNoCase ^ZIBB blockAccess
+%ENDSECTION{"blockSpiders"}%
+
+</verbatim>
+---+++ NO_FOSWIKI_SESSION
+<verbatim class="tml">
+%STARTSECTION{"NO_FOSWIKI_SESSION"}%
+# Setting the NO_FOSWIKI_SESSION environment variable prevents a
+# session being created for the Google Search Appliance bot. This
+# is useful if you have the Google Search Appliance installed on
+# your intranet, as they can be very aggressive when indexing, creating
+# a lot of session files and slowing Foswiki down.
+# You can also set this environment variable for public sites, to
+# prevent Google and other search engines' bots. However, these tend
+# to index your site a lot less often than the Google Search Appliance.
+# *Works on Foswiki 1.1 and later only*
+BrowserMatch "^gsa-crawler" NO_FOSWIKI_SESSION
+%ENDSECTION{"NO_FOSWIKI_SESSION"}%
+
+</verbatim>

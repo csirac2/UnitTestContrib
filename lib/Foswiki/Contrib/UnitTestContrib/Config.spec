@@ -23,4 +23,29 @@ $Foswiki::cfg{UnitTestContrib}{SeleniumRc}{Browsers} = {};
 # The base timeout in milliseconds, used when waiting for the browser (and by implication, the server) to respond.
 # You may have to increase this if your test setup is slow.
 $Foswiki::cfg{UnitTestContrib}{SeleniumRc}{BaseTimeout} = 5000;
-
+# ---++++ Webserver Configs
+# **PERL 80x20**
+# A hash of named webserver configs, where each key names a hash of
+# LocalSite.cfg settings to be overrdiden when testing against that config.
+# In addition to standard LocalSite.cfg keys, there are also the following
+# 'special' keys: <ul>
+# <li><code>_type => 'ApacheHtAccess'</code> - UnitTestContrib has
+#     server-specific code for permutating the webserver config. ApacheHtAccess
+#     mutates an apache2 server config via .htaccess files</li>
+# <li><code>_restart_cmd => '/path/to/my/./restart-script'</code> - the system
+#     command to invoke each time LocalSite.cfg or webserver config changes
+# </li>
+# Several ways of getting up and running with these settings can be found at
+# <a href="http://foswiki.org/Development/TestingWithSelenium#WebserverConfigs">
+# Foswiki:Development.TestingWithSelenium</a>, but the easiest (assuming your
+# existing apache config for the current checkout is liberal with its allowed
+# .htaccess directives):
+# <pre>{
+#     'ApacheHtAccess' => {}
+# }
+# </pre>
+# This will assume <code>_type => 'ApacheHtAccess',
+# _restart_cmd => 'sudo service apache2 restart'</code>, but you will probably
+# want to write your own restart script that won't require sudo prompting - see
+# the TestingWithSelenium doc for suggestions
+$Foswiki::cfg{UnitTestContrib}{Webservers} = {};
