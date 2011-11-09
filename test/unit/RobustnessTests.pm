@@ -104,6 +104,9 @@ sub test_sanitizeAttachmentName {
 
     # Check that "certain characters" are munched
     my $crap = '';
+    if ($Foswiki::cfg{Site}{CharSet} =~ /^utf-?8/) {
+        $Foswiki::cfg{Site}{CharSet} = 'iso-8859-1';
+    }
     $Foswiki::cfg{UseLocale} = 0;
     for ( 0 .. 255 ) {
         my $c = chr($_);
@@ -115,9 +118,12 @@ sub test_sanitizeAttachmentName {
 
     $crap = '';
     $Foswiki::cfg{UseLocale} = 1;
+    $Foswiki::cfg{Site}{CharSet} = 'utf-8';
     for ( 0 .. 255 ) {
         my $c = chr($_);
-        $crap .= $c if $c =~ /$Foswiki::cfg{NameFilter}/;
+        if ($c =~ /($Foswiki::cfg{NameFilter}|[\x7f-\x8f])/) {
+            $crap .= $c;
+        }
     }
     $x = $crap =~ / / ? '_' : '';
     $this->assert_str_equals( "pick_me${x}pick_me",
