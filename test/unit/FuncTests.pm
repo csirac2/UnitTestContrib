@@ -1529,6 +1529,44 @@ sub test_normalizeWebTopicName {
     return;
 }
 
+sub test_normalizeLinkString {
+    my $this = shift;
+    my %tests = (
+        'freestyle link text?in=bracketed#links' => ['FreestyleLinkText', 'in=bracketed', 'links'],
+        ' Foo&amp; - th&is. (is) my?favourite=page!#ofcourse' => ['Foo-This.(is)My', 'favourite=page!', 'ofcourse'],
+        'aa' => ['Aa', undef, undef],
+        'aa.bb' => ['Aa.Bb', undef, undef],
+        'aa/bb' => ['Aa/Bb', undef, undef],
+        'aa/bb/cc' => ['Aa/Bb/Cc', undef, undef],
+        'aa.bb.cc' => ['Aa.Bb.Cc', undef, undef],
+        'aa.bb.cc#' => ['Aa.Bb.Cc', undef, ''],
+        'aa.bb.cc?' => ['Aa.Bb.Cc', '', undef],
+        'aa.bb.cc?#' => ['Aa.Bb.Cc', '', ''],
+        'aa.bb.cc?dd=de' => ['Aa.Bb.Cc', 'dd=ee', undef],
+        'aa.bb.cc?dd=de#' => ['Aa.Bb.Cc', 'dd=ee', ''],
+        'aa.bb.cc?dd=de#ff' => ['Aa.Bb.Cc', 'dd=ee', 'ff'],
+        'aa.bb.cc#ff' => ['Aa.Bb.Cc', undef, 'ff'],
+        '#' => ['', undef, ''],
+        '?' => ['', '', undef],
+        '?#' => ['', '', ''],
+        '?dd=de' => ['', 'dd=ee', undef],
+        '?dd=de#' => ['', 'dd=ee', ''],
+        '?dd=de#ff' => ['', 'dd=ee', 'ff'],
+        '#ff' => ['', undef, 'ff'],
+        '' => [undef, undef, undef],
+    );
+
+    while (my ($string, $result) = each %tests) {
+        my @parts = Foswiki::Func::normalizeLinkString($string);
+
+        $this->assert_deep_equals($result->[0], $parts[0], 'target not equal parsing "' . $string . '"');
+        $this->assert_deep_equals($result->[1], $parts[1], 'params not equal parsing "' . $string . '"');
+        $this->assert_deep_equals($result->[2], $parts[2], 'anchor not equal parsing "' . $string . '"');
+    }
+
+    return;
+}
+
 sub test_checkWebAccessPermission {
     my $this = shift;
 
