@@ -12,7 +12,6 @@ use Foswiki::DOM();
 use constant TRACE => 0;
 
 sub ASSERT_SANITY { 0 }
-sub TRACE_SORT    { 0 }
 
 sub tear_down {
     my ($this) = @_;
@@ -53,7 +52,6 @@ sub _sort_insertion {
 
     while ( scalar(@input) ) {
         my $item = shift(@input);
-        print STDERR "output: @output\n input: $item\n" if TRACE_SORT;
         my $output_i;
 
         if ( $item <= $output[0] ) {
@@ -71,60 +69,40 @@ sub _sort_insertion {
             # Binary-search for the correct place to insert $item into @output
             while ( !defined $output_i ) {
                 my $search_item = $output[$search_i];
-                print STDERR "  search_i: $search_i, delta: $search_i_delta\n"
-                  if TRACE_SORT;
 
                 if ( $item < $search_item ) {
-                    print STDERR "   less than: " if TRACE_SORT;
                     my $new_search_i_delta = $search_i_delta / 2;
 
                     if ( $new_search_i_delta <= 1 ) {
-                        print STDERR "FINAL " if TRACE_SORT;
                         if ( $item < $output[ $search_i - 1 ] ) {
-                            print STDERR "bump left\n" if TRACE_SORT;
                             $output_i = $search_i - 1;
                         }
                         else {
-                            print STDERR "no bump left\n" if TRACE_SORT;
                             $output_i = $search_i;
                         }
                     }
                     else {
-                        print STDERR
-"leftwards, delta was: $search_i_delta, is now: $new_search_i_delta\n"
-                          if TRACE_SORT;
                         $search_i_delta = $new_search_i_delta;
                         $search_i -= int($search_i_delta);
                     }
                 }
                 elsif ( $item >= $search_item ) {
-                    print STDERR "   greater than: " if TRACE_SORT;
                     my $new_search_i_delta = $search_i_delta / 2;
 
                     if ( $new_search_i_delta <= 1 ) {
-                        print STDERR "FINAL " if TRACE_SORT;
                         if ( $item >= $output[ $search_i + 1 ] ) {
-                            print STDERR "bump right\n" if TRACE_SORT;
                             $output_i = $search_i + 1;
                         }
                         else {
-                            print STDERR "no bump right: $item < "
-                              . $output[ $search_i + 1 ] . "\n"
-                              if TRACE_SORT;
                             $output_i = $search_i;
                         }
                     }
                     else {
-                        print STDERR
-"rightwards, delta was: $search_i_delta, is now: $new_search_i_delta\n"
-                          if TRACE_SORT;
                         $search_i_delta = $new_search_i_delta;
                         $search_i += int($search_i_delta);
                     }
                 }
             }
-            print STDERR "item: $item, output_i: $output_i, @output\n"
-              if TRACE_SORT;
             ASSERT( $item >= $output[ $output_i - 1 ] ) if ASSERT_SANITY;
             ASSERT( $item < $output[ $output_i + 1 ] )  if ASSERT_SANITY;
             splice( @output, $output_i, 0, $item );
@@ -163,7 +141,7 @@ sub test_timing_random_sort_perl {
 sub test_timing_random_sort_insertion {
     my ($this) = @_;
 
-    $this->_sort_timing( 1, \&_get_random_data, 1000, \&_sort_insertion );
+    $this->_sort_timing( 20, \&_get_random_data, 1000, \&_sort_insertion );
 
     return;
 }
