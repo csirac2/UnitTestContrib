@@ -105,7 +105,9 @@ sub _sort_insertion {
             }
             ASSERT( $item >= $output[ $output_i - 1 ] ) if ASSERT_SANITY;
             ASSERT( $item < $output[ $output_i + 1 ] )  if ASSERT_SANITY;
-            splice( @output, $output_i, 0, $item );
+
+            # array splicing is expensive, a linked list would would suck less
+            # splice( @output, $output_i, 0, $item );
         }
     }
 
@@ -125,11 +127,17 @@ sub _sort_timing {
         }
     );
 
-    print "Sorted list of size $data_size:\n" . timestr($benchmark);
+    print "Sorted list of size $data_size:\n" . timestr($benchmark) . "\n";
 
     return;
 }
 
+# Briefly curious about just how slow an insertion sort/build-the-tree-as-we-go
+# approach would be; the question is: do we accumulate the claimed syntax
+# regions (ranges) first before building a (sorted) tree (which could leverage
+# the perl sort builtin), or is a continuous insertion-sort approach less
+# expensive overall. Eventually, after I wrote these tests, I found
+# http://www.sysarch.com/Perl/sort_paper.html
 sub test_timing_random_sort_perl {
     my ($this) = @_;
 
