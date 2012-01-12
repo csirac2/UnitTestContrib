@@ -18,6 +18,8 @@ you can always create a new web based on that web.
 
 use strict;
 use warnings;
+
+use Assert;
 use Unit::TestCase;
 our @ISA = qw( Unit::TestCase );
 
@@ -29,6 +31,8 @@ use Foswiki::Plugins;
 use Unit::Request;
 use Unit::Response;
 use Error qw( :try );
+
+sub SESSION_SANITY { 1 }
 
 BEGIN {
 
@@ -436,11 +440,14 @@ sub set_up {
     }
     close(F);
 
+    ASSERT(!defined $Foswiki::Plugins::SESSION) if SESSION_SANITY;
     # Force completion of %Foswiki::cfg
     # This must be done before moving the logging.
     my $query = new Unit::Request();
     my $tmp = new Foswiki( undef, $query );
+    ASSERT(defined $Foswiki::Plugins::SESSION) if SESSION_SANITY;
     $tmp->finish();
+    ASSERT(!defined $Foswiki::Plugins::SESSION) if SESSION_SANITY;
 
     my %tempDirOptions = ( CLEANUP => 1 );
     if ( $^O eq 'MSWin32' ) {
