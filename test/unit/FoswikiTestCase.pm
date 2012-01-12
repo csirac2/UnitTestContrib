@@ -715,8 +715,6 @@ sub createNewFoswikiSession {
     my ( $this, $user, $query, @args ) = @_;
 
     $this->{session}->finish() if $this->{session};
-    $this->{request}->finish()
-      if ( $this->{request} && $this->{request}->can('finish') );
     $this->{session}           = Foswiki->new( $user, $query, @args );
     $this->{request}           = $this->{session}{request};
     $Foswiki::Plugins::SESSION = $this->{session};
