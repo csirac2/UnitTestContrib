@@ -1,16 +1,15 @@
 # NOTE: this is a VERY limited subset of subroutines in Foswiki.pm (um, ok, one - moved from ManageDotPmTests..)
+package FoswikiPmFunctionsTests;
 
 use strict;
 use warnings;
 use diagnostics;
 
-package FoswikiPmFunctionsTests;
-
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
-use Foswiki;
-use Foswiki::UI::Manage;
-use Foswiki::UI::Save;
+use Foswiki();
+use Foswiki::UI::Manage();
+use Foswiki::UI::Save();
 
 my $debug = 0;
 my $fatwilly;
