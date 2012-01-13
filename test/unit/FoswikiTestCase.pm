@@ -32,7 +32,7 @@ use Unit::Request;
 use Unit::Response;
 use Error qw( :try );
 
-sub SESSION_SANITY { 0 }
+sub SESSION_SANITY { 1 }
 
 BEGIN {
 
@@ -484,8 +484,8 @@ sub set_up {
 sub tear_down {
     my $this = shift;
 
-    ASSERT($this->{session}->isa('Foswiki')) if SESSION_SANITY;
     if ($this->{session}) {
+        ASSERT($this->{session}->isa('Foswiki')) if SESSION_SANITY;
         $this->finishFoswikiSession();
     }
     eval { File::Path::rmtree( $Foswiki::cfg{WorkingDir} ); };
