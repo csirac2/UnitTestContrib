@@ -1,6 +1,8 @@
 # See bottom of file for license and copyright
 
 package FoswikiFnTestCase;
+use strict;
+use warnings;
 
 =begin TML
 
@@ -24,15 +26,13 @@ targeting single classes).
 
 =cut
 
-use FoswikiTestCase;
+use FoswikiTestCase();
 our @ISA = qw( FoswikiTestCase );
 
-use strict;
-
-use Foswiki;
-use Unit::Request;
-use Unit::Response;
-use Foswiki::UI::Register;
+use Foswiki();
+use Unit::Request();
+use Unit::Response();
+use Foswiki::UI::Register();
 use Error qw( :try );
 
 our @mails;
@@ -86,8 +86,8 @@ sub set_up {
 
     # Note: some tests are testing Foswiki::UI which also creates a session
     $this->createNewFoswikiSession( undef, $query );
-    $this->{response}          = new Unit::Response();
-    @mails                     = ();
+    $this->{response} = new Unit::Response();
+    @mails = ();
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     my $webObject = Foswiki::Meta->new( $this->{session}, $this->{test_web} );
     $webObject->populateNewWeb();
