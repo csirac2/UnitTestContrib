@@ -106,7 +106,7 @@ sub verify_view {
     $query->path_info("/");
     $query->method('POST');
 
-    my $fatwilly = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
 
     # This first request should *not* be satisfied from the cache, but
     # the cache should be populated with the result.
@@ -114,33 +114,31 @@ sub verify_view {
     my ($one) = $this->capture(
         sub {
             no strict 'refs';
-            &$UI_FN($fatwilly);
+            &$UI_FN( $this->{session} );
             use strict 'refs';
-            $Foswiki::engine->finalize( $fatwilly->{response},
-                $fatwilly->{request} );
+            $Foswiki::engine->finalize( $this->{session}{response},
+                $this->{session}{request} );
         }
     );
 
     my $p1end = new Benchmark();
     print STDERR "R1 " . timestr( timediff( $p1end, $p1start ) ) . "\n";
-    $fatwilly->finish();
 
-    $fatwilly = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
 
     # This second request should be satisfied from the cache
     my $p2start = new Benchmark();
     my ($two) = $this->capture(
         sub {
             no strict 'refs';
-            &$UI_FN($fatwilly);
+            &$UI_FN( $this->{session} );
             use strict 'refs';
-            $Foswiki::engine->finalize( $fatwilly->{response},
-                $fatwilly->{request} );
+            $Foswiki::engine->finalize( $this->{session}{response},
+                $this->{session}{request} );
         }
     );
     my $p2end = new Benchmark();
     print STDERR "R2 " . timestr( timediff( $p2end, $p2start ) ) . "\n";
-    $fatwilly->finish();
 
     # Massage the HTML for comparison
     for ( $one, $two ) {
