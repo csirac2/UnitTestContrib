@@ -16,8 +16,8 @@ use Error qw(:try);
 
 #$Error::Debug = 1;
 
-our $REG_UI_FN;
-our $MAN_UI_FN;
+my $REG_UI_FN;
+my $MAN_UI_FN;
 
 # Set up the test fixture
 sub set_up {
@@ -29,6 +29,7 @@ sub set_up {
 
     @FoswikiFnTestCase::mails = ();
 
+    return;
 }
 
 sub tear_down {
@@ -41,6 +42,8 @@ sub tear_down {
       if ( $this->{session}->webExists("$this->{test_web}EmptyNewExtra") );
 
     $this->SUPER::tear_down();
+
+    return;
 }
 
 ###################################
@@ -49,6 +52,8 @@ sub tear_down {
 sub AllowLoginName {
     my $this = shift;
     $Foswiki::cfg{Register}{AllowLoginName} = 1;
+
+    return;
 }
 
 sub DontAllowLoginName {
@@ -57,38 +62,54 @@ sub DontAllowLoginName {
     $this->{new_user_login} = $this->{new_user_wikiname};
 
     #$this->{test_user_login} = $this->{test_user_wikiname};
+
+    return;
 }
 
 sub TemplateLoginManager {
     $Foswiki::cfg{LoginManager} = 'Foswiki::LoginManager::TemplateLogin';
+
+    return;
 }
 
 sub ApacheLoginManager {
     $Foswiki::cfg{LoginManager} = 'Foswiki::LoginManager::ApacheLogin';
+
+    return;
 }
 
 sub NoLoginManager {
     $Foswiki::cfg{LoginManager} = 'Foswiki::LoginManager';
+
+    return;
 }
 
 sub HtPasswdManager {
     $Foswiki::cfg{PasswordManager} = 'Foswiki::Users::HtPasswdUser';
+
+    return;
 }
 
 sub NonePasswdManager {
     $Foswiki::cfg{PasswordManager} = 'none';
+
+    return;
 }
 
 sub BaseUserMapping {
     my $this = shift;
     $Foswiki::cfg{UserMappingManager} = 'Foswiki::Users::BaseUserMapping';
     $this->set_up_for_verify();
+
+    return;
 }
 
 sub TopicUserMapping {
     my $this = shift;
     $Foswiki::cfg{UserMappingManager} = 'Foswiki::Users::TopicUserMapping';
     $this->set_up_for_verify();
+
+    return;
 }
 
 # See the pod doc in Unit::TestCase for details of how to use this
@@ -117,18 +138,24 @@ sub set_up_for_verify {
     $this->createNewFoswikiSession();
 
     @FoswikiFntestCase::mails = ();
+
+    return;
 }
 
 # Register a user using Fwk prefix in the forms
 sub registerUserExceptionFwk {
-    my $this = shift;
-    $this->_registerUserException( 'Fwk', @_ );
+    my ( $this, @args ) = @_;
+    $this->_registerUserException( 'Fwk', @args );
+
+    return;
 }
 
 # Register a user using Twk prefix in the forms
 sub registerUserExceptionTwk {
-    my $this = shift;
-    $this->_registerUserException( 'Twk', @_ );
+    my ( $this, @args ) = @_;
+    $this->_registerUserException( 'Twk', @args );
+
+    return;
 }
 
 #to simplify registration
@@ -137,7 +164,7 @@ sub registerUserExceptionTwk {
 sub _registerUserException {
     my ( $this, $pfx, $loginname, $forename, $surname, $email ) = @_;
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'        => ['UserRegistration'],
             "${pfx}1Email"     => [$email],
@@ -176,7 +203,7 @@ sub _registerUserException {
         $exception = shift;
     }
     otherwise {
-        $exception = new Error::Simple();
+        $exception = Error::Simple->new();
     };
 
     # Reload caches
@@ -188,11 +215,11 @@ sub _registerUserException {
 }
 
 sub addUserToGroup {
-    my $this = shift;
+    my ( $this, @args ) = @_;
 
     #my $queryHash = shift;
 
-    my $query = new Unit::Request(@_);
+    my $query = Unit::Request->new(@args);
 
     $query->path_info("/$this->{users_web}/WikiGroups");
     $this->createNewFoswikiSession( undef, $query );
@@ -232,18 +259,18 @@ sub addUserToGroup {
     }
     otherwise {
         print STDERR "--------- otherwise\n" if ($Error::Debug);
-        $exception = new Error::Simple();
+        $exception = Error::Simple->new();
     };
     print STDERR $responseText || '';
     return $exception;
 }
 
 sub removeUserFromGroup {
-    my $this = shift;
+    my ( $this, @args ) = @_;
 
     #my $queryHash = shift;
 
-    my $query = new Unit::Request(@_);
+    my $query = Unit::Request->new(@args);
 
     $query->path_info("/$this->{users_web}/WikiGroups");
     $this->createNewFoswikiSession( undef, $query );
@@ -281,7 +308,7 @@ sub removeUserFromGroup {
     }
     otherwise {
         print STDERR "--------- otherwise\n" if ($Error::Debug);
-        $exception = new Error::Simple();
+        $exception = Error::Simple->new();
     };
     return $exception;
 }
@@ -319,6 +346,8 @@ sub test_SingleAddToNewGroupCreate {
     $this->assert(
         Foswiki::Func::isGroupMember( "NewGroup", $this->{session}->{user} ) );
     $this->assert( Foswiki::Func::isGroupMember( "NewGroup", "AsdfPoiu" ) );
+
+    return;
 }
 
 sub test_DoubleAddToNewGroupCreate {
@@ -364,6 +393,8 @@ sub test_DoubleAddToNewGroupCreate {
     $this->assert( Foswiki::Func::isGroupMember( "NewGroup", "AsdfPoiu" ) );
     $this->assert( Foswiki::Func::isGroupMember( "NewGroup", "QwerPoiu" ) );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu" ) );
+
+    return;
 }
 
 sub test_TwiceAddToNewGroupCreate {
@@ -519,6 +550,7 @@ sub test_TwiceAddToNewGroupCreate {
     $this->assert( Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu3" ) );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu4" ) );
 
+    return;
 }
 
 ###########################################################################
@@ -554,6 +586,8 @@ sub test_SingleAddToNewGroupNoCreate {
     $this->assert(
         !Foswiki::Func::topicExists( $this->{users_web}, "AnotherNewGroup" ) );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "AsdfPoiu" ) );
+
+    return;
 }
 
 sub test_NoUserAddToNewGroupCreate {
@@ -601,6 +635,8 @@ sub test_NoUserAddToNewGroupCreate {
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "AsdfPoiu" ) );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "QwerPoiu" ) );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu" ) );
+
+    return;
 }
 
 sub test_RemoveFromNonExistantGroup {
@@ -634,6 +670,8 @@ sub test_RemoveFromNonExistantGroup {
     $this->assert(
         !Foswiki::Func::topicExists( $this->{users_web}, "AnotherNewGroup" ) );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "AsdfPoiu" ) );
+
+    return;
 }
 
 sub test_RemoveNoUserFromExistantGroup {
@@ -667,6 +705,8 @@ sub test_RemoveNoUserFromExistantGroup {
     $this->assert(
         !Foswiki::Func::topicExists( $this->{users_web}, "AnotherNewGroup" ) );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "AsdfPoiu" ) );
+
+    return;
 }
 
 sub verify_resetEmailOkay {
@@ -688,7 +728,7 @@ sub verify_resetEmailOkay {
         $this->{session}->{users}->setPassword( $cUID, $newPassU, $oldPassU ) );
     my $newEmail = 'brian@family.guy';
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'LoginName'   => ['brian'],
             'TopicName'   => ['ChangeEmailAddress'],
@@ -729,6 +769,8 @@ sub verify_resetEmailOkay {
 
     my @emails = $this->{session}->{users}->getEmails($cUID);
     $this->assert_str_equals( $newEmail, $emails[0] );
+
+    return;
 }
 
 sub verify_bulkRegister {
@@ -748,13 +790,13 @@ EOM
         $Foswiki::cfg{DataDir} . '/'
       . $this->{test_web} . '/'
       . $regTopic . '.txt';
-    my $fh = new FileHandle;
+    my $fh = FileHandle->new();
 
     die "Can't write $file" unless ( $fh->open(">$file") );
     print $fh $testReg;
     $fh->close;
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'LogTopic'              => [$logTopic],
             'EmailUsersWithDetails' => ['0'],
@@ -790,6 +832,8 @@ EOM
         $this->assert( 0, "expected an oops redirect" );
     };
     $this->assert_equals( 0, scalar(@FoswikiFnTestCase::mails) );
+
+    return;
 }
 
 #in which a user correctly points out that the error checking is a bit minimal
@@ -810,13 +854,13 @@ EOM
         $Foswiki::cfg{DataDir} . '/'
       . $this->{test_web} . '/'
       . $regTopic . '.txt';
-    my $fh = new FileHandle;
+    my $fh = FileHandle->new();
 
     die "Can't write $file" unless ( $fh->open(">$file") );
     print $fh $testReg;
     $fh->close;
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'LogTopic'              => [$logTopic],
             'EmailUsersWithDetails' => ['0'],
@@ -861,6 +905,8 @@ EOM
         $this->assert( 0, "expected an oops redirect" );
     };
     $this->assert_equals( 0, scalar(@FoswikiFnTestCase::mails) );
+
+    return;
 }
 
 sub verify_deleteUser {
@@ -875,7 +921,7 @@ sub verify_deleteUser {
     $this->assert(
         $this->{session}->{users}->setPassword( $cUID, $newPassU, $oldPassU ) );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'password' => ['12345'],
             'action'   => ['deleteUserAccount'],
@@ -919,12 +965,14 @@ sub verify_deleteUser {
     otherwise {
         $this->assert( 0, "expected an oops redirect" );
     };
+
+    return;
 }
 
 sub test_createDefaultWeb {
     my $this   = shift;
     my $newWeb = $this->{test_web} . 'NewExtra';    #no, this is not nested
-    my $query  = new Unit::Request(
+    my $query  = Unit::Request->new(
         {
             'action'  => ['createweb'],
             'baseweb' => ['_default'],
@@ -973,6 +1021,7 @@ sub test_createDefaultWeb {
     my $webObject = Foswiki::Meta->new( $this->{session}, $newWeb );
     $this->assert_equals( 'fuchsia', $webObject->getPreference('WEBBGCOLOR') );
     $this->assert_equals( 'on',      $webObject->getPreference('SITEMAPLIST') );
+    $webObject->finish();
 
 #check that the topics from _default web are actually in the new web, and make sure they are expectently similar
     my @expectedTopicsItr = Foswiki::Func::getTopicList('_default');
@@ -980,8 +1029,10 @@ sub test_createDefaultWeb {
         $this->assert( Foswiki::Func::topicExists( $newWeb, $expectedTopic ) );
         my ( $eMeta, $eText ) =
           Foswiki::Func::readTopic( '_default', $expectedTopic );
+        $eMeta->finish();
         my ( $nMeta, $nText ) =
           Foswiki::Func::readTopic( $newWeb, $expectedTopic );
+        $nMeta->finish();
 
    #change the params set above to what they were in the template WebPreferences
         $nText =~
@@ -996,15 +1047,17 @@ s/($Foswiki::regex{setRegex}WEBSUMMARY\s*=).twinkle twinkle little star$/$1 /m;
         $this->assert_html_equals( $eText, $nText )
           ;    #.($Foswiki::RELEASE =~ /1\.1\.0/?"\n":''));
     }
+
+    return;
 }
 
 sub test_saveSettings_allowed {
     my $this = shift;
 
     # Create a test topic
-    my $testTopic =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, "SaveSettings",
-        <<TEXT);
+    my ($testTopic) =
+      Foswiki::Func::readTopic( $this->{test_web}, "SaveSettings" );
+    $testTopic->text( <<'TEXT');
 Philosophers, philosophers, everywhere,
    * Set TEXTSET = text set
    * Local TEXTLOCAL = text local
@@ -1013,8 +1066,9 @@ But never a one who thinks
 %META:PREFERENCE{name="METALOCAL" type="Local" value="meta local"}%
 TEXT
     $testTopic->save();
+    $testTopic->finish();
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'action' => ['saveSettings'],
             'text' =>
@@ -1033,7 +1087,7 @@ TEXT
         $this->assert( 0, $e );
     };
 
-    $query = new Unit::Request( {} );
+    $query = Unit::Request->new( {} );
     $query->path_info("/$this->{test_web}/SaveSettings");
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->assert_equals( "text set",
@@ -1046,6 +1100,8 @@ TEXT
         $this->{session}->{prefs}->getPreference('NEWSET') );
     $this->assert_equals( "new local",
         $this->{session}->{prefs}->getPreference('NEWLOCAL') );
+
+    return;
 }
 
 # try and change the access rights on the fly
@@ -1053,9 +1109,9 @@ sub test_saveSettings_denied {
     my $this = shift;
 
     # Create a test topic
-    my $testTopic =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, "SaveSettings" );
-    $testTopic->text(<<TEXT);
+    my ($testTopic) =
+      Foswiki::Func::readTopic( $this->{test_web}, "SaveSettings" );
+    $testTopic->text(<<'TEXT');
 Philosophers, philosophers, everywhere,
    * Set ALLOWTOPICCHANGE = ZeusAndHera
    * Set TEXTSET = text set
@@ -1065,8 +1121,9 @@ But never a one who thinks
 %META:PREFERENCE{name="METALOCAL" type="Local" value="meta local"}%
 TEXT
     $testTopic->save();
+    $testTopic->finish();
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'action' => ['saveSettings'],
             'text' =>
@@ -1084,7 +1141,7 @@ TEXT
         $this->assert(0);
     };
 
-    $query = new Unit::Request( {} );
+    $query = Unit::Request->new( {} );
     $query->path_info("/$this->{test_web}/SaveSettings");
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->assert_equals( "text set",
@@ -1097,6 +1154,8 @@ TEXT
         $this->{session}->{prefs}->getPreference('METALOCAL') );
     $this->assert_null( $this->{session}->{prefs}->getPreference('NEWSET') );
     $this->assert_null( $this->{session}->{prefs}->getPreference('NEWLOCAL') );
+
+    return;
 }
 
 # TODO: need a test for asynchronous merge of an edit save and a settings save
@@ -1104,7 +1163,7 @@ TEXT
 sub test_createEmptyWeb {
     my $this   = shift;
     my $newWeb = $this->{test_web} . 'EmptyNewExtra';    #no, this is not nested
-    my $query  = new Unit::Request(
+    my $query  = Unit::Request->new(
         {
             'action'  => ['createweb'],
             'baseweb' => ['_empty'],
@@ -1157,6 +1216,7 @@ sub test_createEmptyWeb {
     $this->assert_equals( 'fuchsia', $webObject->getPreference('WEBBGCOLOR') );
     $this->assert_equals( 'somenewskin,another',
         $webObject->getPreference('SKIN') );
+    $webObject->finish();
 
     #nope, SITEMAPLIST isn't required
     #$this->assert_equals('on', $webObject->getPreference('SITEMAPLIST'));
@@ -1172,8 +1232,10 @@ sub test_createEmptyWeb {
 
         my ( $eMeta, $eText ) =
           Foswiki::Func::readTopic( '_empty', $expectedTopic );
+        $eMeta->finish();
         my ( $nMeta, $nText ) =
           Foswiki::Func::readTopic( $newWeb, $expectedTopic );
+        $nMeta->finish();
 
    #change the params set above to what they were in the template WebPreferences
         $nText =~
@@ -1189,6 +1251,7 @@ sub test_createEmptyWeb {
           ;    #.($Foswiki::RELEASE =~ /1\.1\.0/?"\n":''));
     }
 
+    return;
 }
 
 #TODO: add tests for all the failure conditions - ie, creating a web that exists.
