@@ -114,9 +114,7 @@ sub fixture_groups {
 sub set_up_for_verify {
     my $this = shift;
 
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
-    $Foswiki::Plugins::SESSION = $this->{session};
+    $this->createNewFoswikiSession();
 
     @FoswikiFntestCase::mails = ();
 }
@@ -154,11 +152,11 @@ sub _registerUserException {
     );
 
     $query->path_info("/$this->{users_web}/UserRegistration");
-    my $fatwilly = new Foswiki( undef, $query );
-    $fatwilly->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
+    $this->createNewFoswikiSession( undef, $query );
+    $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     my $exception;
     try {
-        $this->captureWithKey( register => $REG_UI_FN, $fatwilly );
+        $this->captureWithKey( register => $REG_UI_FN, $this->{session} );
     }
     catch Foswiki::OopsException with {
         $exception = shift;
@@ -180,12 +178,10 @@ sub _registerUserException {
     otherwise {
         $exception = new Error::Simple();
     };
-    $fatwilly->finish();
 
     # Reload caches
     my $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     return $exception;
@@ -199,7 +195,7 @@ sub addUserToGroup {
     my $query = new Unit::Request(@_);
 
     $query->path_info("/$this->{users_web}/WikiGroups");
-    my $fatwilly = new Foswiki( undef, $query );
+    $this->createNewFoswikiSession( undef, $query );
 
     my ( $responseText, $result, $stdout, $stderr );
 
@@ -208,7 +204,7 @@ sub addUserToGroup {
         no strict 'refs';
         ( $responseText, $result, $stdout, $stderr ) = $this->captureWithKey(
             manage => $this->getUIFn('manage'),
-            $fatwilly
+            $this->{session}
         );
         no strict 'refs';
     }
@@ -250,12 +246,15 @@ sub removeUserFromGroup {
     my $query = new Unit::Request(@_);
 
     $query->path_info("/$this->{users_web}/WikiGroups");
-    my $fatwilly = new Foswiki( undef, $query );
+    $this->createNewFoswikiSession( undef, $query );
 
     my $exception;
     try {
         no strict 'refs';
-        $this->captureWithKey( manage => $this->getUIFn('manage'), $fatwilly );
+        $this->captureWithKey(
+            manage => $this->getUIFn('manage'),
+            $this->{session}
+        );
         no strict 'refs';
     }
     catch Foswiki::OopsException with {
@@ -311,8 +310,7 @@ sub test_SingleAddToNewGroupCreate {
 
     #need to reload to force Foswiki to reparse Groups :(
     my $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
 
     $this->assert(
         Foswiki::Func::topicExists( $this->{users_web}, "NewGroup" ) );
@@ -355,8 +353,7 @@ sub test_DoubleAddToNewGroupCreate {
 
     #need to reload to force Foswiki to reparse Groups :(
     my $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
 
     $this->assert(
         Foswiki::Func::topicExists( $this->{users_web}, "NewGroup" ) );
@@ -410,8 +407,7 @@ sub test_TwiceAddToNewGroupCreate {
 
     #need to reload to force Foswiki to reparse Groups :(
     my $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
 
     $this->assert(
         Foswiki::Func::topicExists( $this->{users_web}, "NewGroup" ) );
@@ -441,8 +437,7 @@ sub test_TwiceAddToNewGroupCreate {
 
     #need to reload to force Foswiki to reparse Groups :(
     $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
 
     $this->assert(
         Foswiki::Func::topicExists( $this->{users_web}, "NewGroup" ) );
@@ -473,8 +468,7 @@ sub test_TwiceAddToNewGroupCreate {
 
     #need to reload to force Foswiki to reparse Groups :(
     $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
 
     $this->assert(
         Foswiki::Func::topicExists( $this->{users_web}, "NewGroup" ) );
@@ -501,8 +495,7 @@ sub test_TwiceAddToNewGroupCreate {
 
     #need to reload to force Foswiki to reparse Groups :(
     $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
     $this->assert( Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu2" ) );
     $this->assert( Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu3" ) );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu4" ) );
@@ -520,8 +513,7 @@ sub test_TwiceAddToNewGroupCreate {
 
     #need to reload to force Foswiki to reparse Groups :(
     $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu" ) );
     $this->assert( !Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu2" ) );
     $this->assert( Foswiki::Func::isGroupMember( "NewGroup", "ZxcvPoiu3" ) );
@@ -557,8 +549,7 @@ sub test_SingleAddToNewGroupNoCreate {
 
     #need to reload to force Foswiki to reparse Groups :(
     my $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
 
     $this->assert(
         !Foswiki::Func::topicExists( $this->{users_web}, "AnotherNewGroup" ) );
@@ -599,8 +590,7 @@ sub test_NoUserAddToNewGroupCreate {
 
     #need to reload to force Foswiki to reparse Groups :(
     my $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
 
     $this->assert(
         Foswiki::Func::topicExists( $this->{users_web}, "NewGroup" ) );
@@ -639,8 +629,7 @@ sub test_RemoveFromNonExistantGroup {
 
     #need to reload to force Foswiki to reparse Groups :(
     my $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
 
     $this->assert(
         !Foswiki::Func::topicExists( $this->{users_web}, "AnotherNewGroup" ) );
@@ -673,8 +662,7 @@ sub test_RemoveNoUserFromExistantGroup {
 
     #need to reload to force Foswiki to reparse Groups :(
     my $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
 
     $this->assert(
         !Foswiki::Func::topicExists( $this->{users_web}, "AnotherNewGroup" ) );
@@ -712,8 +700,7 @@ sub verify_resetEmailOkay {
     );
 
     $query->path_info( '/' . $this->{users_web} . '/WebHome' );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( 'brian', $query );
+    $this->createNewFoswikiSession( 'brian', $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     try {
         $this->captureWithKey( manage => $MAN_UI_FN, $this->{session} );
@@ -777,8 +764,7 @@ EOM
     );
 
     $query->path_info("/$this->{test_web}/$regTopic");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{SuperAdminGroup}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{SuperAdminGroup}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     $this->{session}->{topicName} = $regTopic;
     $this->{session}->{webName}   = $this->{test_web};
@@ -840,8 +826,7 @@ EOM
     );
 
     $query->path_info("/$this->{test_web}/$regTopic");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{SuperAdminGroup}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{SuperAdminGroup}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     $this->{session}->{topicName} = $regTopic;
     $this->{session}->{webName}   = $this->{test_web};
@@ -897,8 +882,7 @@ sub verify_deleteUser {
         }
     );
     $query->path_info("/$this->{test_web}/Arbitrary");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( 'eric', $query );
+    $this->createNewFoswikiSession( 'eric', $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     $this->{session}->{topicName} = 'Arbitrary';
     $this->{session}->{webName}   = $this->{test_web};
@@ -953,8 +937,7 @@ sub test_createDefaultWeb {
         }
     );
     $query->path_info("/$this->{test_web}/Arbitrary");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{SuperAdminGroup}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{SuperAdminGroup}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     $this->{session}->{topicName} = 'Arbitrary';
     $this->{session}->{webName}   = $this->{test_web};
@@ -1040,8 +1023,7 @@ TEXT
         }
     );
     $query->path_info("/$this->{test_web}/SaveSettings");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     try {
         my ( $stdout, $stderr, $result ) =
           $this->captureWithKey( manage => $MAN_UI_FN, $this->{session} );
@@ -1050,11 +1032,10 @@ TEXT
         my $e = shift;
         $this->assert( 0, $e );
     };
-    $this->{session}->finish();
 
     $query = new Unit::Request( {} );
     $query->path_info("/$this->{test_web}/SaveSettings");
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->assert_equals( "text set",
         $this->{session}->{prefs}->getPreference('TEXTSET') );
     $this->assert_equals( "text local",
@@ -1084,7 +1065,6 @@ But never a one who thinks
 %META:PREFERENCE{name="METALOCAL" type="Local" value="meta local"}%
 TEXT
     $testTopic->save();
-    $this->{session}->finish();
 
     my $query = new Unit::Request(
         {
@@ -1095,7 +1075,7 @@ TEXT
         }
     );
     $query->path_info("/$this->{test_web}/SaveSettings");
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     try {
         my ( $stdout, $stderr, $result ) =
           $this->captureWithKey( manage => $MAN_UI_FN, $this->{session} );
@@ -1103,11 +1083,10 @@ TEXT
     catch Foswiki::AccessControlException with {} otherwise {
         $this->assert(0);
     };
-    $this->{session}->finish();
 
     $query = new Unit::Request( {} );
     $query->path_info("/$this->{test_web}/SaveSettings");
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->assert_equals( "text set",
         $this->{session}->{prefs}->getPreference('TEXTSET') );
     $this->assert_equals( "text local",
@@ -1141,8 +1120,7 @@ sub test_createEmptyWeb {
         }
     );
     $query->path_info("/$this->{test_web}/Arbitrary");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{SuperAdminGroup}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{SuperAdminGroup}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     $this->{session}->{topicName} = 'Arbitrary';
     $this->{session}->{webName}   = $this->{test_web};
