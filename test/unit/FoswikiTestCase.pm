@@ -32,7 +32,7 @@ use Unit::Request;
 use Unit::Response;
 use Error qw( :try );
 
-sub SESSION_SANITY { 1 }
+sub SESSION_SANITY { 0 }
 
 BEGIN {
 
@@ -483,7 +483,11 @@ sub set_up {
 # Restores Foswiki::cfg and %ENV from backup
 sub tear_down {
     my $this = shift;
-    $this->{session}->finish() if $this->{session};
+
+    ASSERT($this->{session}->isa('Foswiki')) if SESSION_SANITY;
+    if ($this->{session}) {
+        $this->finishFoswikiSession();
+    }
     eval { File::Path::rmtree( $Foswiki::cfg{WorkingDir} ); };
     %Foswiki::cfg = eval $this->{__FoswikiSafe};
     foreach my $sym ( keys %ENV ) {
@@ -572,14 +576,16 @@ $result is the result of the function.
 =cut
 
 sub capture {
-    my $this = shift;
+    my ($this, $fn, $session, @args) = @_;
 
-    my ( $stdout, $stderr, $result ) = $this->captureSTD(@_);
-    my $fn = shift;
+    # 'capture' involves creating a new Foswiki singleton, so ensure one isn't
+    # already instantiated
+    my ( $stdout, $stderr, $result ) = $this->captureSTD($fn, $session, @args);
 
+    ASSERT(ref($session) || ref($Foswiki::Plugins::SESSION));
     my $response =
-      UNIVERSAL::isa( $_[0], 'Foswiki' )
-      ? $_[0]->{response}
+      UNIVERSAL::isa( $session, 'Foswiki' )
+      ? $session->{response}
       : $Foswiki::Plugins::SESSION->{response};
 
     my $responseText = '';
@@ -715,14 +721,25 @@ sub createNewFoswikiSession {
     my ( $this, $user, $query, @args ) = @_;
 
     $this->{session}->finish() if $this->{session};
+    ASSERT(!defined $Foswiki::Plugins::SESSION) if SESSION_SANITY;
     $this->{session}           = Foswiki->new( $user, $query, @args );
     $this->{request}           = $this->{session}{request};
-    $Foswiki::Plugins::SESSION = $this->{session};
+    ASSERT(defined $Foswiki::Plugins::SESSION) if SESSION_SANITY;
     $this->{test_topicObject}->finish() if $this->{test_topicObject};
     ( $this->{test_topicObject} ) =
       Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
 
     return $this->{session};
+}
+
+sub finishFoswikiSession {
+    my ($this) = @_;
+
+    $this->{session}->finish() if defined $this->{session};
+    ASSERT(!$Foswiki::Plugins::SESSION) if SESSION_SANITY;
+    $this->{session} = undef;
+
+    return;
 }
 
 1;
