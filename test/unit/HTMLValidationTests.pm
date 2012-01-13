@@ -5,14 +5,13 @@ use warnings;
 #this has been quickly copied from the UICompilation tests
 #TODO: need to pick a list of topics, actions, opps's and add detection of installed skins
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
-use Foswiki;
-use Foswiki::UI::View;
+use Foswiki();
+use Foswiki::UI::View();
+use HTML::Tidy();
 use Error qw( :try );
-use HTML::Tidy;
 
 our $UI_FN;
 our $SCRIPT_NAME;
@@ -53,7 +52,6 @@ sub loadExtraConfig {
     $Foswiki::cfg{JQueryPlugin}{Plugins}{PopUpWindow}{Enabled} = 1;
 
     $this->SUPER::loadExtraConfig( $context, @args );
-
 
     return;
 }
@@ -111,7 +109,7 @@ sub fixture_groups {
                 context  => $array[2],
             };
         }
-        next unless (ref($dispatcher) eq 'HASH');#bad switchboard entry.
+        next unless ( ref($dispatcher) eq 'HASH' );    #bad switchboard entry.
 
         my $package  = $dispatcher->{package} || 'Foswiki::UI';
         my $function = $dispatcher->{function};
@@ -176,17 +174,17 @@ sub call_UI_FN {
 
 #turn off ASSERTS so we get less plain text erroring - the user should always see html
     local $ENV{FOSWIKI_ASSERTS} = 0;
-    my $fatwilly = Foswiki->new( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my ( $responseText, $result, $stdout, $stderr );
     $responseText = 'Status: 500';    #errr, boom
     try {
         ( $responseText, $result, $stdout, $stderr ) = $this->captureWithKey(
             $SCRIPT_NAME => sub {
                 no strict 'refs';
-                &${UI_FN}($fatwilly);
+                &${UI_FN}( $this->{session} );
                 use strict 'refs';
-                $Foswiki::engine->finalize( $fatwilly->{response},
-                    $fatwilly->{request} );
+                $Foswiki::engine->finalize( $this->{session}{response},
+                    $this->{session}{request} );
             }
         );
     }
@@ -198,7 +196,6 @@ sub call_UI_FN {
         my $e = shift;
         $responseText = $e->stringify();
     };
-    $fatwilly->finish();
 
     $this->assert($responseText);
     $this->assert_matches( qr/^1?$/, $result,
