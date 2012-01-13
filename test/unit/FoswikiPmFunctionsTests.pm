@@ -12,18 +12,6 @@ use Foswiki::UI::Manage();
 use Foswiki::UI::Save();
 
 my $debug = 0;
-my $fatwilly;
-
-# Set up the test fixture
-sub set_up {
-    my $this = shift;
-
-    $this->SUPER::set_up();
-    my $query = new Unit::Request();
-    $fatwilly = Foswiki->new( undef, $query );
-    $this->{request}  = $query;
-    $this->{response} = new Unit::Response();
-}
 
 sub test_isValidTopicName_WebHome {
     my $this = shift;
