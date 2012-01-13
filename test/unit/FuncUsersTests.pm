@@ -238,7 +238,7 @@ sub set_up_for_verify {
 
     # Force a re-read
 
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
 
     @FoswikiFntestCase::mails = ();
 }
@@ -319,7 +319,7 @@ sub verify_eachGroupTraditional {
 
     # Force a re-read
 
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
 
     @FoswikiFntestCase::mails = ();
 
@@ -351,7 +351,7 @@ sub verify_eachGroupCustomAdmin {
 
     # Force a re-read
 
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
 
     @FoswikiFntestCase::mails = ();
 
