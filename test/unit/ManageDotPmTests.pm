@@ -1,20 +1,18 @@
-
 #TODO: permission tests
 #TODO: non-existant user test
+package ManageDotPmTests;
 
 use strict;
 use warnings;
 use diagnostics;
 
-package ManageDotPmTests;
-
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
+use Foswiki();
+use Foswiki::UI::Manage();
+use Foswiki::UI::Save();
+use FileHandle();
 use Error qw(:try);
-use Foswiki;
-use Foswiki::UI::Manage;
-use Foswiki::UI::Save;
-use FileHandle;
 
 #$Error::Debug = 1;
 
