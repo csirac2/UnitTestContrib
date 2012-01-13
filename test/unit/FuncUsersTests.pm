@@ -7,15 +7,15 @@ use warnings;
 # Some basic tests for adding/removing users in the Foswiki users topic,
 # and finding them again.
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
-use Foswiki::Func;
-use Foswiki::UI::Register;
-use Error qw( :try );
-use Data::Dumper;
+use Foswiki();
+use Foswiki::Func();
+use Foswiki::UI::Register();
 use Foswiki::Configure::Dependency ();
+use Data::Dumper;
+use Error qw( :try );
 
 my %loginname;
 my $post11;
