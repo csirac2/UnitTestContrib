@@ -1,14 +1,15 @@
 package CacheTests;
+use strict;
+use warnings;
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
-use Foswiki;
-use Foswiki::Meta;
+use Foswiki();
+use Foswiki::Meta();
 use Error qw( :try );
-use Foswiki::OopsException;
-use Foswiki::PageCache;
+use Foswiki::OopsException();
+use Foswiki::PageCache();
 use Benchmark qw(:hireswallclock);
 
 my $UI_FN;
