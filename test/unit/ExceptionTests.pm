@@ -1,12 +1,14 @@
 package ExceptionTests;
-use FoswikiFnTestCase;
+use strict;
+use warnings;
+
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
 
 use Error qw( :try );
-use Foswiki::OopsException;
-use Foswiki::AccessControlException;
+use Foswiki::OopsException();
+use Foswiki::AccessControlException();
 
 my $UI_FN;
 
@@ -14,6 +16,8 @@ sub set_up {
     my $this = shift;
     $this->SUPER::set_up();
     $UI_FN ||= $this->getUIFn('oops');
+
+    return;
 }
 
 # Check an OopsException with one non-array parameter
@@ -43,6 +47,8 @@ qr/^OopsException\(templatename\/defname web=>webname topic=>topicname keep=>1 p
             $e->stringify()
         );
     };
+
+    return;
 }
 
 # Check an oops exception with several parameters, including illegal HTML
@@ -69,17 +75,21 @@ qr/^OopsException\(templatename web=>webname topic=>topicname params=>\[phlegm,<
             $e->stringify()
         );
     };
+
+    return;
 }
 
 sub upchuck {
     my $session = shift;
-    my $e       = new Foswiki::OopsException(
+    my $e       = Foswiki::OopsException->new(
         'templatename',
         web    => 'webname',
         topic  => 'topicname',
         params => [ 'phlegm', '<pus>' ]
     );
     $e->redirect($session);
+
+    return;
 }
 
 # Test for DEPRECATED redirect
@@ -92,22 +102,25 @@ sub deprecated_test_redirectOopsException {
 qr#^Location: http.*/oops/webname/topicname?template=oopstemplatename;param1=phlegm;param2=%26%2360%3bpus%26%2362%3b$#m,
         $output
     );
+
+    return;
 }
 
 sub test_AccessControlException {
     my $this = shift;
-    my $ace  = new Foswiki::AccessControlException( 'FRY', 'burger', 'Spiders',
+    my $ace  = Foswiki::AccessControlException->new( 'FRY', 'burger', 'Spiders',
         'FlumpNuts', 'Because it was there.' );
     $this->assert_str_equals(
 "AccessControlException: Access to FRY Spiders.FlumpNuts for burger is denied. Because it was there.",
         $ace->stringify()
     );
 
+    return;
 }
 
 sub test_oopsScript {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             skin     => 'none',
             template => 'oopsgeneric',
@@ -129,6 +142,8 @@ sub test_oopsScript {
     $this->assert_matches( qr/^sat on$/m,           $output );
     $this->assert_matches( qr/^the rat$/m,          $output );
     $this->assert_matches( qr/^phlegm$/m,           $output );
+
+    return;
 }
 
 1;
