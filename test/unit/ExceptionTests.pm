@@ -85,9 +85,8 @@ sub upchuck {
 # Test for DEPRECATED redirect
 sub deprecated_test_redirectOopsException {
     my $this = shift;
-    my $t    = new Foswiki();
-    my ($output) = $this->capture( \&upchuck, $t );
-    $t->finish();
+    $this->createNewFoswikiSession();
+    my ($output) = $this->capture( \&upchuck, $this->{session} );
     $this->assert_matches( qr/^Status: 302.*$/m, $output );
     $this->assert_matches(
 qr#^Location: http.*/oops/webname/topicname?template=oopstemplatename;param1=phlegm;param2=%26%2360%3bpus%26%2362%3b$#m,
@@ -120,7 +119,7 @@ sub test_oopsScript {
             param5   => "the cat\nsat on\nthe rat"
         }
     );
-    my $session = new Foswiki( undef, $query );
+    $this->createNewFoswikiSession( undef, $query );
     my ($output) =
       $this->capture( $UI_FN, $session, "Flum", "DeDum", $query, 0 );
     $this->assert_matches( qr/^phlegm$/m,           $output );
@@ -130,8 +129,6 @@ sub test_oopsScript {
     $this->assert_matches( qr/^sat on$/m,           $output );
     $this->assert_matches( qr/^the rat$/m,          $output );
     $this->assert_matches( qr/^phlegm$/m,           $output );
-
-    $session->finish();
 }
 
 1;
