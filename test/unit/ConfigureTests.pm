@@ -31,9 +31,9 @@ sub set_up {
     chop $root;
     $root =~ s|\\|/|g;
 
-    $this->{rootdir}  = $root;
-    $this->{user}     = $Foswiki::cfg{AdminUserLogin};
-    $this->{session}  = Foswiki->new( $this->{user} );
+    $this->{rootdir} = $root;
+    $this->{user}    = $Foswiki::cfg{AdminUserLogin};
+    $this->createNewFoswikiSession( $this->{user} );
     $this->{test_web} = 'Testsystemweb1234';
     my $webObject = Foswiki::Meta->new( $this->{session}, $this->{test_web} );
     $webObject->populateNewWeb();
@@ -141,7 +141,7 @@ EXAMPLE
     $cfg{MandatoryBoolean} = 0;
     $cfg{Types}{Chosen}    = 'Foswiki::Configure::Types::STRING';
     $cfg{OptionalRegex}    = qr/^X*$/;
-    my  $expected_regex = '\'^X*$\'';
+    my $expected_regex = '\'^X*$\'';
     $cfg{DontIgnore}  = 'now is';
     $saver->{content} = '';
     $out              = $saver->_save();
