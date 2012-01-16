@@ -1,16 +1,14 @@
-use strict;
-
 package ViewScriptTests;
+use strict;
+use warnings;
 
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
 use Foswiki;
 use Foswiki::UI::View;
 use Error qw( :try );
 
-my $fatwilly;
 my $UI_FN;
 
 my $topic1 = <<'HERE';
@@ -85,8 +83,6 @@ sub set_up {
 
     $UI_FN ||= $this->getUIFn('view');
 
-    $fatwilly = $this->{session};
-
     #set up nested web $this->{test_web}/Nest
     $this->{test_subweb} = $this->{test_web} . '/Nest';
     my $topic = 'TestTopic1';
@@ -123,7 +119,7 @@ sub set_up {
     $meta->save( user => $this->{test_user_wikiname} );
 
     try {
-        $this->{session} = new Foswiki('AdminUser');
+        $this->createNewFoswikiSession('AdminUser');
 
         my $webObject =
           Foswiki::Meta->new( $this->{session}, $this->{test_subweb} );
@@ -157,7 +153,7 @@ sub set_up {
     $topic = 'TestTopic1';
 
     try {
-        $this->{session} = new Foswiki('AdminUser');
+        $this->createNewFoswikiSession('AdminUser');
 
         my $webObject =
           Foswiki::Meta->new( $this->{session}, $this->{test_clashingsubweb} );
@@ -201,20 +197,19 @@ sub setup_view {
     );
     $query->path_info("/$web/$topic");
     $query->method('POST');
-    $fatwilly = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my ($text) = $this->capture(
         sub {
             no strict 'refs';
-            &$UI_FN($fatwilly);
+            &$UI_FN($this->{session});
             use strict 'refs';
-            $Foswiki::engine->finalize( $fatwilly->{response},
-                $fatwilly->{request} );
+            $Foswiki::engine->finalize( $this->{session}{response},
+                $this->{session}{request} );
         }
     );
 
-    my $editUrl = $fatwilly->getScriptUrl( '0', 'edit', $this->{test_web}, '' );
+    my $editUrl = $this->{session}->getScriptUrl('0', 'edit', $this->{test_web}, '' );
 
-    $fatwilly->finish();
     $text =~ s/\r//g;
     $text =~ s/(^.*?\n\n+)//s;    # remove CGI header
     return ( $text, $1, $editUrl );
@@ -322,11 +317,9 @@ sub urltest {
     my $query = new Unit::Request( {} );
     $query->setUrl($url);
     $query->method('GET');
-    my $fatwilly = new Foswiki( $this->{test_user_login}, $query );
-    $this->assert_equals( $web,   $fatwilly->{webName} );
-    $this->assert_equals( $topic, $fatwilly->{topicName} );
-
-    $fatwilly->finish();
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
+    $this->assert_equals( $web,   $this->{session}->{webName} );
+    $this->assert_equals( $topic, $this->{session}->{topicName} );
 }
 
 sub test_urlparsing {
