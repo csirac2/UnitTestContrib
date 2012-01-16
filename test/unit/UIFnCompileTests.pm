@@ -97,17 +97,17 @@ sub call_UI_FN {
     );
     $query->path_info("/$web/$topic");
     $query->method('POST');
-    my $fatwilly = Foswiki->new( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my ( $responseText, $result, $stdout, $stderr );
     $responseText = "Status: 500";    #errr, boom
     try {
         ( $responseText, $result, $stdout, $stderr ) = $this->captureWithKey(
             switchboard => sub {
                 no strict 'refs';
-                &${UI_FN}($fatwilly);
+                &${UI_FN}( $this->{session} );
                 use strict 'refs';
-                $Foswiki::engine->finalize( $fatwilly->{response},
-                    $fatwilly->{request} );
+                $Foswiki::engine->finalize( $this->{session}{response},
+                    $this->{session}{request} );
             }
         );
     }
@@ -119,7 +119,6 @@ sub call_UI_FN {
         my $e = shift;
         $responseText = $e->stringify();
     };
-    $fatwilly->finish();
 
     $this->assert($responseText);
 
