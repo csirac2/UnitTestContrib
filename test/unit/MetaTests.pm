@@ -617,6 +617,7 @@ EVIL
     $text = <<'EVIL';
 %META:TOPICPARENT{}%
 EVIL
+    $topicObject->finish();
     $topicObject =
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, "BadMeta",
         $text );
@@ -633,6 +634,7 @@ EVIL
 %META:TOPICMOVED{from="here" to="there" by="her" date="1234567890"}%
 $gunk
 GOOD
+    $topicObject->finish();
     $topicObject =
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, "GoodMeta",
         $text );
@@ -642,6 +644,7 @@ GOOD
     $topicObject->expandNewTopic();
     $topicObject->renderTML( $topicObject->text() );
     $topicObject->renderFormForDisplay();
+    $topicObject->finish();
 
     return;
 }
@@ -726,6 +729,7 @@ sub test_registerMETA {
     $this->assert( $o->isValidEmbedding( 'TREE', { height => '15' } ) );
     $this->assert(
         $o->isValidEmbedding( 'TREE', { spread => '5', height => '15' } ) );
+    $o->finish();
 
     return;
 }
@@ -773,6 +777,7 @@ Properties: System.SemanticIsPartOf,Example.Property,PreyOf,Eat,IsPartOf
 A property: Snakes
 Values: System.UserDocumentationCategory,UserDocumentationCategory,Snakes,Mosquitos,Flies,UserDocumentationCategory
 EXPECTED
+    $topicObject->finish();
 
     return;
 }
@@ -816,6 +821,7 @@ Properties: System.SemanticIsPartOf
 Alias: System.SemanticIsPartOf
 Values: System.UserDocumentationCategory
 EXPECTED
+    $topicObject->finish();
 
     return;
 }
@@ -850,6 +856,7 @@ sub test_getRevisionHistory {
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'RevIt',
         "Rev 1" );
     $this->assert_equals( 1, $topicObject->save() );
+    $topicObject->finish();
     $topicObject =
       Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'RevIt' );
     my $revIt = $topicObject->getRevisionHistory();
@@ -859,6 +866,7 @@ sub test_getRevisionHistory {
 
     $topicObject->text('Rev 2');
     $this->assert_equals( 2, $topicObject->save( forcenewrevision => 1 ) );
+    $topicObject->finish();
     $topicObject =
       Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'RevIt' );
     $revIt = $topicObject->getRevisionHistory();
@@ -870,6 +878,7 @@ sub test_getRevisionHistory {
 
     $topicObject->text('Rev 3');
     $this->assert_equals( 3, $topicObject->save( forcenewrevision => 1 ) );
+    $topicObject->finish();
     $topicObject =
       Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'RevIt' );
     $revIt = $topicObject->getRevisionHistory();
@@ -880,6 +889,7 @@ sub test_getRevisionHistory {
     $this->assert( $revIt->hasNext() );
     $this->assert_equals( 1, $revIt->next() );
     $this->assert( !$revIt->hasNext() );
+    $topicObject->finish();
 
     return;
 }
@@ -890,6 +900,7 @@ sub test_summariseChanges {
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'RevIt',
         "Line 1\n\nLine 2\n\nLine 3" );
     $this->assert_equals( 1, $topicObject->save() );
+    $topicObject->finish();
     $topicObject =
       Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'RevIt' );
     my $revIt = $topicObject->getRevisionHistory();
@@ -901,6 +912,7 @@ sub test_summariseChanges {
 
     $topicObject->text("Line 1\n\nLine 3");
     $this->assert_equals( 2, $topicObject->save( forcenewrevision => 1 ) );
+    $topicObject->finish();
     $topicObject =
       Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'RevIt' );
     $revIt = $topicObject->getRevisionHistory();
@@ -914,6 +926,7 @@ sub test_summariseChanges {
 
     $topicObject->text("Line 1\n<nop>SomeOtherData\nLine 3");
     $this->assert_equals( 3, $topicObject->save( forcenewrevision => 1 ) );
+    $topicObject->finish();
     $topicObject =
       Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'RevIt' );
     $revIt = $topicObject->getRevisionHistory();
@@ -972,6 +985,7 @@ RESULT
     #$topicObject =
     #  Foswiki::Meta->load($this->{session}, $this->{test_web}, 'RevIt', '3' );
     #print "REV3 \n====\n".$topicObject->text()."\n====\n";
+    $topicObject->finish();
 
     return;
 }
@@ -983,14 +997,17 @@ sub test_haveAccess {
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'WebHome' );
     $this->assert( $topicObject->haveAccess('VIEW') );
     $this->assert( $topicObject->haveAccess('CHANGE') );
+    $topicObject->finish();
 
     my $webObject = Foswiki::Meta->new( $this->{session}, $this->{test_web} );
     $this->assert( $webObject->haveAccess('VIEW') );
     $this->assert( $webObject->haveAccess('CHANGE') );
+    $webObject->finish();
 
     my $rootObject = Foswiki::Meta->new( $this->{session} );
     $this->assert( $rootObject->haveAccess('VIEW') );
     $this->assert( not $rootObject->haveAccess('CHANGE') );
+    $rootObject->finish();
 
     return;
 }
@@ -1025,6 +1042,7 @@ HERE
     $this->assert_equals( 'TemiVarghese', $ti->{author} );
     $this->assert_equals( 10,             $ti->{version} );
     $this->assert_equals( 1306913758,     $ti->{date} );
+    $meta->finish();
 
     return;
 }
@@ -1064,6 +1082,7 @@ HERE
     $this->assert_equals( 'BaseUserMapping_666', $ti->{author} );
     $this->assert_equals( 0,                     $ti->{version} );
     $this->assert_equals( 0,                     $ti->{date} );
+    $meta->finish();
 
     return;
 }
