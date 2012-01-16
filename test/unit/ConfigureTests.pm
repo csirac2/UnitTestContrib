@@ -31,9 +31,9 @@ sub set_up {
     chop $root;
     $root =~ s|\\|/|g;
 
-    $this->{rootdir}  = $root;
-    $this->{user}     = $Foswiki::cfg{AdminUserLogin};
-    $this->{session}  = Foswiki->new( $this->{user} );
+    $this->{rootdir} = $root;
+    $this->{user}    = $Foswiki::cfg{AdminUserLogin};
+    $this->createNewFoswikiSession( $this->{user} );
     $this->{test_web} = 'Testsystemweb1234';
     my $webObject = Foswiki::Meta->new( $this->{session}, $this->{test_web} );
     $webObject->populateNewWeb();
