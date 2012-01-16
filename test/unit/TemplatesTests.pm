@@ -6,21 +6,16 @@ package TemplatesTests;
 use strict;
 use warnings;
 
-use FoswikiTestCase;
+use FoswikiTestCase();
 our @ISA = qw( FoswikiTestCase );
 
-use File::Path;
-
-use Foswiki;
-use Foswiki::Templates;
-use Foswiki::Configure::Dependency;
-use Foswiki::OopsException;
+use File::Path();
+use Assert;
+use Foswiki();
+use Foswiki::Templates();
+use Foswiki::Configure::Dependency();
+use Foswiki::OopsException();
 use Error qw( :try );
-
-sub new {
-    my $self = shift()->SUPER::new(@_);
-    return $self;
-}
 
 my $test_tmpls;
 my $test_data;
@@ -32,7 +27,7 @@ sub set_up {
     $this->SUPER::set_up();
 
     $this->{tempdir} = $Foswiki::cfg{TempfileDir} . '/test_TemplateTests';
-    mkpath( $this->{tempdir} );
+    File::Path::mkpath( $this->{tempdir} );
 
     my $here = $this->{tempdir};
     $here =~ m/^(.*)$/;
@@ -54,12 +49,15 @@ sub set_up {
     $Foswiki::cfg{TemplatePath} =~
       s/\$Foswiki::cfg{SystemWebName}/$Foswiki::cfg{SystemWebName}/geo;
 
+    return;
 }
 
 sub tear_down {
     my $this = shift;
     $this->SUPER::tear_down();
-    rmtree( $this->{tempdir} );    # Cleanup any old tests
+    File::Path::rmtree( $this->{tempdir} );    # Cleanup any old tests
+
+    return;
 }
 
 sub write_template {
@@ -69,19 +67,23 @@ sub write_template {
     if ( $tmpl =~ m!^(.*)/[^/]*$! ) {
         File::Path::mkpath("$test_tmpls/$1") unless -d "$test_tmpls/$1";
     }
-    open( F, ">$test_tmpls/$tmpl.tmpl" ) || die;
-    print F $content;
-    close(F);
+    ASSERT( open( my $F, '>', "$test_tmpls/$tmpl.tmpl" ) );
+    print $F $content;
+    ASSERT( close($F) );
+
+    return;
 }
 
 sub write_topic {
     my ( $web, $topic, $content ) = @_;
 
     File::Path::mkpath("$test_data/$web") unless -d "$test_data/$web";
-    open( F, ">$test_data/$web/$topic.txt" ) || die;
+    ASSERT( open( my $F, '>', "$test_data/$web/$topic.txt" ) );
     $content = $content || "$web/$topic";
-    print F $content;
-    close(F);
+    print $F $content;
+    ASSERT( close($F) );
+
+    return;
 }
 
 sub test_skinPathBasic {
@@ -101,6 +103,8 @@ sub test_skinPathBasic {
 
     $data = $tmpls->readTemplate( 'script', skins => 'skin', web => 'web' );
     $this->assert_str_equals( 'scripttmplcontent', $data );
+
+    return;
 }
 
 sub test_skinPathWeb {
@@ -124,6 +128,7 @@ sub test_skinPathWeb {
     $data = $tmpls->readTemplate( 'script', skins => 'skin', web => 'web' );
     $this->assert_str_equals( 'web/script.skin', $data );
 
+    return;
 }
 
 sub test_skinPathsOneSkin {
@@ -144,6 +149,8 @@ sub test_skinPathsOneSkin {
 
     $data = $tmpls->readTemplate( 'script', skins => 'scaly', web => 'web' );
     $this->assert_str_equals( "script.scaly", $data );
+
+    return;
 }
 
 sub test_skinPathsOneSkinWeb {
@@ -159,6 +166,8 @@ sub test_skinPathsOneSkinWeb {
 
     $data = $tmpls->readTemplate( 'script', skins => 'burnt', web => 'web' );
     $this->assert_str_equals( 'web/script.burnt', $data );
+
+    return;
 }
 
 sub test_skinPathsTwoSkins {
@@ -191,6 +200,8 @@ sub test_skinPathsTwoSkins {
 
     $data = $tmpls->readTemplate( 'kibble', skins => 'suede' );
     $this->assert_str_equals( "kibble", $data );
+
+    return;
 }
 
 sub test_pathOdd {
@@ -215,6 +226,7 @@ sub test_pathOdd {
     $data = $tmpls->readTemplate( 'script', skins => 'skinA.skin' );
     $this->assert_str_equals( 'the script.skinA.skin.tmpl template', $data );
 
+    return;
 }
 
 sub test_pathOtherUses {
@@ -254,13 +266,14 @@ sub test_pathOtherUses {
     $this->assert_str_equals(
         'the scriptD.override.tmpl template the scriptD.tmpl template', $data );
 
+    return;
 }
 
 sub test_directLookupInUsertopic {
     my $this = shift;
     my $data;
 
-    my $dep = new Foswiki::Configure::Dependency(
+    my $dep = Foswiki::Configure::Dependency->new(
         type    => "perl",
         module  => "Foswiki",
         version => ">=1.2"
@@ -304,6 +317,8 @@ sub test_directLookupInUsertopic {
 
     $data = $tmpls->readTemplate('web.test');
     $this->assert_str_equals( 'the Web.Test template', $data );
+
+    return;
 }
 
 sub test_WebTopicsA {
@@ -324,6 +339,8 @@ sub test_WebTopicsA {
 
     $data = $tmpls->readTemplate( 'script', skins => 'burnt', web => 'web' );
     $this->assert_str_equals( "$sys/ScriptTemplate", $data );
+
+    return;
 }
 
 sub test_WebTopicsB {
@@ -343,6 +360,8 @@ sub test_WebTopicsB {
     $this->assert_str_equals( "$sys/BurntSkinScriptTemplate", $data );
     $data = $tmpls->readTemplate( 'script', skins => 'burnt' );
     $this->assert_str_equals( "$sys/BurntSkinScriptTemplate", $data );
+
+    return;
 }
 
 sub test_WebTopicsC {
@@ -363,6 +382,8 @@ sub test_WebTopicsC {
     $this->assert_str_equals( "$sys/BurntSkinScriptTemplate", $data );
     $data = $tmpls->readTemplate( 'script', skins => 'burnt', web => 'web' );
     $this->assert_str_equals( "$sys/BurntSkinScriptTemplate", $data );
+
+    return;
 }
 
 sub test_WebTopicsD {
@@ -384,6 +405,8 @@ sub test_WebTopicsD {
     $this->assert_str_equals( "$sys/BurntSkinScriptTemplate", $data );
     $data = $tmpls->readTemplate( 'script', skins => 'burnt', web => 'web' );
     $this->assert_str_equals( "Web/BurntSkinScriptTemplate", $data );
+
+    return;
 }
 
 sub test_webTopicsE {
@@ -406,6 +429,8 @@ sub test_webTopicsE {
     $data =
       $tmpls->readTemplate( 'Web.Script', skins => 'burnt', web => 'web' );
     $this->assert_str_equals( "Web/Script", $data );
+
+    return;
 }
 
 #Wishlist
@@ -453,24 +478,25 @@ sub test_iterativeTemplate {
     my $data;
 
 # Template expands a template >1000 times - should not trigger any oops exceptions
-    write_template(
-        'iterative', '
+    write_template( 'iterative',
+        <<'HERE' . ( '%TMPL:P{"subtmpl"}% ' x 1001 ) . '%TMPL:END%' );
 %TMPL:DEF{"subtmpl"}% blah %TMPL:END%
-%TMPL:DEF{"iterative"}% ' . ( '%TMPL:P{"subtmpl"}% ' x 1001 ) . '%TMPL:END%'
-    );
+%TMPL:DEF{"iterative"}% 
+HERE
     $data = $tmpls->readTemplate('iterative');
     $data = $tmpls->expandTemplate('iterative');
+
+    return;
 }
 
 sub test_loopingTemplate {
     my $this = shift;
     my $data;
 
-    write_template(
-        'looping', ' %TMPL:DEF{"loop"}% %TMPL:P{"loop"}% %TMPL:END%
+    write_template( 'looping', <<'HERE');
+ %TMPL:DEF{"loop"}% %TMPL:P{"loop"}% %TMPL:END%
 %TMPL:DEF{"subloop"}% %TMPL:P{"loop"}% %TMPL:END%
-'
-    );
+HERE
     $data = $tmpls->readTemplate('looping');
     try {
         $data = $tmpls->expandTemplate('loop');
@@ -482,6 +508,8 @@ sub test_loopingTemplate {
             qr/^OopsException\(attention\/template_recursion/,
             $e->stringify() );
     };
+
+    return;
 }
 
 sub language_setup_11 {
@@ -541,22 +569,20 @@ sub language_setup {
     $this->expect_failure(
         'Default TMPL params are Foswiki 1.2+ only, Item11400',
         with_dep => 'Foswiki,<,1.2' );
-    write_template(
-        'strings', '
+    write_template( 'strings', <<'HERE');
+
 %TMPL:DEF{"Question"}%Do you see?%TMPL:END%
 %TMPL:DEF{"Yes" char="?"}%Yes%char%%TMPL:END%
 %TMPL:DEF{"No"}%No%char%%TMPL:END%
 %TMPL:DEF{"Dontknow" char=""}%Dunno%char%%TMPL:END%
-'
-    );
-    write_template(
-        'strings.gaelic', '
+HERE
+    write_template( 'strings.gaelic', <<'HERE');
+
 %TMPL:DEF{"Question"}%An faca sibh?%TMPL:END%
 %TMPL:DEF{"Yes" char="?"}%Chunnaic%char%%TMPL:END%
 %TMPL:DEF{"No"}%Chan fhaca%char%%TMPL:END%
 %TMPL:DEF{"Dontknow" char=""}%Níl a fhios%char%%TMPL:END%
-'
-    );
+HERE
     write_template( "pattern", '%TMPL:INCLUDE{"strings"}%SKIN=pattern ' );
 
 # test TMPL:DEF params
@@ -564,13 +590,14 @@ sub language_setup {
 # 'Yes': default value is provided in DEF, not inserted in TMPL:P, so left as is
 # 'Dontknow': default empty value is provided in TMPL:DEF
 
-    write_template(
-        'example', '%TMPL:INCLUDE{"pattern"}%%TMPL:P{"Question"}%
+    write_template( 'example', <<'HERE');
+%TMPL:INCLUDE{"pattern"}%%TMPL:P{"Question"}%
 <input type="button" value="%TMPL:P{"No" char="!"}%">
 <input type="button" value="%TMPL:P{"Yes"}%">
 <input type="button" value="%TMPL:P{"Dontknow"}%">
-'
-    );
+HERE
+
+    return;
 }
 
 sub test_languageEnglish {
@@ -579,12 +606,15 @@ sub test_languageEnglish {
 
     $this->language_setup();
     $data = $tmpls->readTemplate( 'example', skins => 'pattern' );
-    $this->assert_str_equals( '
+    $this->assert_str_equals( <<'HERE', $data );
+
 SKIN=pattern Do you see?
 <input type="button" value="No!">
 <input type="button" value="Yes?">
 <input type="button" value="Dunno">
-', $data );
+HERE
+
+    return;
 }
 
 sub test_languageGaelic {
@@ -593,17 +623,21 @@ sub test_languageGaelic {
 
     $this->language_setup();
     $data = $tmpls->readTemplate( 'example', skins => 'gaelic,pattern' );
-    $this->assert_str_equals( '
+    $this->assert_str_equals( <<'HERE', $data );
+
 SKIN=pattern An faca sibh?
 <input type="button" value="Chan fhaca!">
 <input type="button" value="Chunnaic?">
 <input type="button" value="Níl a fhios">
-', $data );
+HERE
+
+    return;
 }
 
 sub baseskin_shortcutPREV_setup {
     write_template(
-        'xview', '%TMPL:DEF{"mytoolbar"}%%TMPL:END%
+        'xview',
+        '%TMPL:DEF{"mytoolbar"}%%TMPL:END%
 %TMPL:DEF{"mywindow"}%%TMPL:END%
 %TMPL:P{"mywindow"}%'
     );
@@ -618,6 +652,8 @@ sub baseskin_shortcutPREV_setup {
     write_template( 'xview.skin3',
 '%TMPL:INCLUDE{"xview"}%%TMPL:DEF{"mytoolbar"}%spellchecker,%TMPL:PREV%%TMPL:END%'
     );
+
+    return;
 }
 
 =pod
@@ -641,6 +677,8 @@ sub test_TMPLPREV {
     $data = $tmpls->readTemplate( 'xview', skins => 'skin3,skin2,skin1' );
     $this->assert_str_equals( 'spellchecker,format,style,table,body,footbar,',
         $data );
+
+    return;
 }
 
 sub baseskin_PREV_setup {
@@ -660,6 +698,8 @@ sub baseskin_PREV_setup {
     write_template( 'yview.skin3',
 '%TMPL:INCLUDE{"yview"}%%TMPL:DEF{"mytoolbar"}%spellchecker,%TMPL:P{"mytoolbar:_PREV:_PREV"}%%TMPL:END%'
     );
+
+    return;
 }
 
 =pod
@@ -683,6 +723,8 @@ sub test_TMPL_PREV {
     $data = $tmpls->readTemplate( 'yview', skins => 'skin3,skin2,skin1' );
     $this->assert_str_equals( 'spellchecker,format,style,body,footbar,',
         $data );
+
+    return;
 }
 
 1;
