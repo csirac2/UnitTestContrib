@@ -2,38 +2,41 @@ package SemiAutomaticTestCaseTests;
 use strict;
 use warnings;
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
-use Foswiki::UI::View;
+use Foswiki();
+use Foswiki::UI::View();
 use Error qw( :try );
 
 my $VIEW_UI_FN;
 
 sub set_up {
     my $this = shift;
-    $this->SUPER::set_up;
+    $this->SUPER::set_up();
+
     # Testcases are written using good anchors
     $Foswiki::cfg{RequireCompatibleAnchors} = 0;
     $VIEW_UI_FN ||= $this->getUIFn('view');
 
     # This user is used in some testcases. All we need to do is make sure
     # their topic exists in the test users web
-    if (!$this->{session}->topicExists(
-            $Foswiki::cfg{UsersWebName},
-            'WikiGuest')){
+    if ( !$this->{session}
+        ->topicExists( $Foswiki::cfg{UsersWebName}, 'WikiGuest' ) )
+    {
         my $to = Foswiki::Meta->new(
             $this->{session}, $Foswiki::cfg{UsersWebName},
-            'WikiGuest', 'This user is used in some testcases');
+            'WikiGuest',      'This user is used in some testcases'
+        );
         $to->save();
     }
-    if (!$this->{session}->topicExists(
-            $Foswiki::cfg{UsersWebName},
-            'UnknownUser')){
+    if ( !$this->{session}
+        ->topicExists( $Foswiki::cfg{UsersWebName}, 'UnknownUser' ) )
+    {
         my $to = Foswiki::Meta->new(
             $this->{session}, $Foswiki::cfg{UsersWebName},
-            'UnknownUser', 'This user is used in some testcases');
+            'UnknownUser',    'This user is used in some testcases'
+        );
         $to->save();
     }
 }
@@ -62,6 +65,7 @@ sub list_tests {
         use strict 'refs';
         push( @set, $test );
     }
+    $this->finishFoswikiSession();
     return @set;
 }
 
@@ -69,9 +73,10 @@ sub run_testcase {
     my ( $this, $testcase ) = @_;
     my $query = new Unit::Request(
         {
-            test               => 'compare',
-            debugenableplugins => 'TestFixturePlugin,SpreadSheetPlugin,InterwikiPlugin',
-            skin               => 'pattern'
+            test => 'compare',
+            debugenableplugins =>
+              'TestFixturePlugin,SpreadSheetPlugin,InterwikiPlugin',
+            skin => 'pattern'
         }
     );
     $query->path_info("/TestCases/$testcase");
@@ -84,14 +89,14 @@ sub run_testcase {
       Foswiki::Meta->new( $this->{session}, $this->{users_web},
         'ProjectContributor', 'none' );
     $topicObject->save();
-    my ($text) = $this->capture( $VIEW_UI_FN, $this->{session});
+    my ($text) = $this->capture( $VIEW_UI_FN, $this->{session} );
 
     unless ( $text =~ m#<font color="green">ALL TESTS PASSED</font># ) {
         open( F, ">${testcase}_run.html" );
         print F $text;
         close F;
         $query->delete('test');
-        ($text) = $this->capture( $VIEW_UI_FN, $this->{session});
+        ($text) = $this->capture( $VIEW_UI_FN, $this->{session} );
         open( F, ">${testcase}.html" );
         print F $text;
         close F;
