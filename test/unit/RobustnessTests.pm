@@ -13,6 +13,8 @@ use Foswiki::Sandbox();
 use Foswiki::Time();
 use Error qw( :try );
 
+my $slash = ( $^O eq 'MSWin32' ) ? '\\' : '/';
+
 sub new {
     my ( $class, @args ) = @_;
     my $this = $class->SUPER::new(@args);
