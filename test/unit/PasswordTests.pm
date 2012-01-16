@@ -23,7 +23,7 @@ sub set_up {
 
     $this->SUPER::set_up();
 
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
     $Foswiki::cfg{Htpasswd}{FileName} = "$Foswiki::cfg{TempfileDir}/junkpasswd";
 
     $this->{users1} = {
@@ -52,7 +52,6 @@ sub set_up {
 sub tear_down {
     my $this = shift;
     unlink $Foswiki::cfg{Htpasswd}{FileName};
-    $this->{session}->finish();
     $this->SUPER::tear_down();
 }
 
