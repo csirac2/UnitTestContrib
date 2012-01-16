@@ -42,7 +42,7 @@ my $session;
 sub set_up {
     my $this = shift;
     $this->SUPER::set_up();
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
 
     $m1 = Foswiki::Meta->new( $this->{session}, $web, $topic );
     $m1->put( "TOPICINFO", $args );
