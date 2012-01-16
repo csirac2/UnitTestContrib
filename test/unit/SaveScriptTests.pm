@@ -2,15 +2,15 @@ package SaveScriptTests;
 use strict;
 use warnings;
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
-use Foswiki::UI::Save;
+use Foswiki();
+use Foswiki::UI::Save();
+use Unit::Request();
 use Error qw( :try );
-use Unit::Request;
 
-our $UI_FN;
+my $UI_FN;
 
 my $testform1 = <<'HERE';
 | *Name* | *Type* | *Size* | *Values* | *Tooltip message* | *Attributes* |
@@ -59,8 +59,9 @@ A guest of this Foswiki web, not unlike yourself. You can leave your trace behin
 HERE
 
 sub new {
-    my $self = shift()->SUPER::new( 'Save', @_ );
-    return $self;
+    my ( $class, @args ) = @_;
+
+    return $class->SUPER::new( 'Save', @args );
 }
 
 # Set up the test fixture
@@ -114,18 +115,19 @@ sub set_up {
 
     $topicObject =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $Foswiki::cfg{WebPrefsTopicName}, <<CONTENT);
+        $Foswiki::cfg{WebPrefsTopicName}, <<'CONTENT');
    * Set WEBFORMS = TestForm1,TestForm2,TestForm3,TestForm4
    * Set DENYWEBCHANGE = DuckDodgers
 CONTENT
     $topicObject->save();
 
+    return;
 }
 
 # AUTOINC
 sub test_AUTOINC {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action => ['save'],
             text   => ['nowt'],
@@ -163,12 +165,14 @@ sub test_AUTOINC {
         }
     }
     $this->assert_equals( 2, $seen );
+
+    return;
 }
 
 # 10X
 sub test_XXXXXXXXXX {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action => ['save'],
             text   => ['nowt'],
@@ -203,12 +207,14 @@ sub test_XXXXXXXXXX {
         }
     }
     $this->assert_equals( 2, $seen );
+
+    return;
 }
 
 # 9X
 sub test_XXXXXXXXX {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action => ['save'],
             text   => ['nowt'],
@@ -235,12 +241,14 @@ sub test_XXXXXXXXX {
         }
     }
     $this->assert($seen);
+
+    return;
 }
 
 #11X
 sub test_XXXXXXXXXXX {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action => ['save'],
             text   => ['nowt'],
@@ -263,11 +271,13 @@ sub test_XXXXXXXXXXX {
         }
     }
     $this->assert($seen);
+
+    return;
 }
 
 sub test_emptySave {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action => ['save'],
             topic  => [ $this->{test_web} . '.EmptyTestSaveScriptTopic' ]
@@ -281,11 +291,13 @@ sub test_emptySave {
     my $text = $meta->text;
     $this->assert_matches( qr/^\s*$/, $text );
     $this->assert_null( $meta->get('FORM') );
+
+    return;
 }
 
 sub test_simpleTextSave {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text   => ['CORRECT'],
             action => ['save'],
@@ -300,11 +312,13 @@ sub test_simpleTextSave {
     my $text = $meta->text;
     $this->assert_matches( qr/CORRECT/, $text );
     $this->assert_null( $meta->get('FORM') );
+
+    return;
 }
 
 sub test_simpleTextSaveDeniedWebCHANGE {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text   => ['CORRECT'],
             action => ['save'],
@@ -334,7 +348,7 @@ sub test_simpleTextSaveDeniedWebCHANGE {
         $exception = shift;
     }
     otherwise {
-        $exception = new Error::Simple();
+        $exception = Error::Simple->new();
     };
 
     $this->assert_matches(
@@ -343,11 +357,13 @@ qr/AccessControlException: Access to CHANGE TemporarySaveTestWebSave. for duck i
     );
     $this->assert( !$this->{session}
           ->topicExists( $this->{test_web}, 'DeleteTestSaveScriptTopic3' ) );
+
+    return;
 }
 
 sub test_templateTopicTextSave {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text   => ['Template Topic'],
             action => ['save'],
@@ -356,7 +372,7 @@ sub test_templateTopicTextSave {
     );
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             templatetopic => ['TemplateTopic'],
             action        => ['save'],
@@ -371,12 +387,14 @@ sub test_templateTopicTextSave {
     my $text = $meta->text;
     $this->assert_matches( qr/Template Topic/, $text );
     $this->assert_null( $meta->get('FORM') );
+
+    return;
 }
 
 # Save over existing topic
 sub test_prevTopicTextSave {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text   => ['WRONG'],
             action => ['save'],
@@ -385,7 +403,7 @@ sub test_prevTopicTextSave {
     );
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             text   => ['CORRECT'],
             action => ['save'],
@@ -400,12 +418,14 @@ sub test_prevTopicTextSave {
     my $text = $meta->text;
     $this->assert_matches( qr/CORRECT/, $text );
     $this->assert_null( $meta->get('FORM') );
+
+    return;
 }
 
 # Save into missing web
 sub test_missingWebSave {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text   => ['WRONG'],
             action => ['save'],
@@ -424,12 +444,14 @@ sub test_missingWebSave {
     otherwise {
         $this->assert( 0, shift );
     };
+
+    return;
 }
 
 # Save over existing topic with no text
 sub test_prevTopicEmptyTextSave {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text   => ['CORRECT'],
             action => ['save'],
@@ -438,7 +460,7 @@ sub test_prevTopicEmptyTextSave {
     );
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             action => ['save'],
             topic  => [ $this->{test_web} . '.PrevTopicEmptyTextSave' ]
@@ -452,11 +474,13 @@ sub test_prevTopicEmptyTextSave {
     my $text = $meta->text;
     $this->assert_matches( qr/^\s*CORRECT\s*$/, $text );
     $this->assert_null( $meta->get('FORM') );
+
+    return;
 }
 
 sub test_simpleFormSave {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text         => ['CORRECT'],
             formtemplate => ['TestForm1'],
@@ -479,11 +503,13 @@ sub test_simpleFormSave {
     # field default values should be all ''
     $this->assert_str_equals( 'Flintstone',
         $meta->get( 'FIELD', 'Textfield' )->{value} );
+
+    return;
 }
 
 sub test_templateTopicFormSave {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text         => ['Template Topic'],
             formtemplate => ['TestForm1'],
@@ -500,7 +526,7 @@ sub test_templateTopicFormSave {
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
         'TemplateTopic' );
     my $xtext = $xmeta->text;
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             templatetopic => ['TemplateTopic'],
             action        => ['save'],
@@ -520,11 +546,13 @@ sub test_templateTopicFormSave {
         $meta->get( 'FIELD', 'Select' )->{value} );
     $this->assert_str_equals( 'Fred',
         $meta->get( 'FIELD', 'Textfield' )->{value} );
+
+    return;
 }
 
 sub test_prevTopicFormSave {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text         => ['Template Topic'],
             formtemplate => ['TestForm1'],
@@ -536,7 +564,7 @@ sub test_prevTopicFormSave {
     );
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             action      => ['save'],
             'Textfield' => ['Barney'],
@@ -555,11 +583,13 @@ sub test_prevTopicFormSave {
         $meta->get( 'FIELD', 'Select' )->{value} );
     $this->assert_str_equals( 'Barney',
         $meta->get( 'FIELD', 'Textfield' )->{value} );
+
+    return;
 }
 
 sub test_simpleFormSave1 {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action               => ['save'],
             text                 => [$testtext_nometa],
@@ -584,6 +614,7 @@ sub test_simpleFormSave1 {
     $this->assert_str_equals( 'Test',
         $meta->get( 'FIELD', 'Textfield' )->{value} );
 
+    return;
 }
 
 # Field values that do not have a corresponding definition in form
@@ -603,7 +634,7 @@ sub test_simpleFormSave2 {
     $meta->copyFrom($oldmeta);
     $meta->save( user => $this->{test_user_login} );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action               => ['save'],
             text                 => [$testtext_nometa],
@@ -628,6 +659,8 @@ sub test_simpleFormSave2 {
     $this->assert_str_equals( 'Test',
         $meta->get( 'FIELD', 'Textfield' )->{value} );
     $this->assert_null( $meta->get( 'FIELD', 'CheckboxandButtons' ) );
+
+    return;
 }
 
 # meta data (other than FORM, FIELD, TOPICPARENT, etc.) is preserved
@@ -647,7 +680,7 @@ sub test_simpleFormSave3 {
     $meta->copyFrom($oldmeta);
     $meta->save( user => $this->{test_user_login} );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action               => ['save'],
             text                 => [$testtext_nometa],
@@ -672,6 +705,7 @@ sub test_simpleFormSave3 {
     $this->assert_str_equals( 'UserTopic',
         $meta->get( 'PREFERENCE', 'VIEW_TEMPLATE' )->{value} );
 
+    return;
 }
 
 # Testing zero value form field values - Item9970
@@ -679,7 +713,7 @@ sub test_simpleFormSave3 {
 # We have made this bug several times in history
 sub test_simpleFormSaveZeroValue {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text         => ['CORRECT'],
             formtemplate => ['TestForm1'],
@@ -701,13 +735,15 @@ sub test_simpleFormSaveZeroValue {
 
     $this->assert_str_equals( '0',
         $meta->get( 'FIELD', 'Textfield' )->{value} );
+
+    return;
 }
 
 # Testing empty value form field values - Item9970
 # The purpose of this test is to confirm that we can save an empty value
 sub test_simpleFormSaveEmptyValue {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             text         => ['CORRECT'],
             formtemplate => ['TestForm1'],
@@ -728,6 +764,8 @@ sub test_simpleFormSaveEmptyValue {
     $this->assert_str_equals( 'TestForm1', $meta->get('FORM')->{name} );
 
     $this->assert_str_equals( '', $meta->get( 'FIELD', 'Textfield' )->{value} );
+
+    return;
 }
 
 # meta data (other than FORM, FIELD, TOPICPARENT, etc.) is inherited from
@@ -737,7 +775,7 @@ sub test_templateTopicWithMeta {
 
     Foswiki::Func::saveTopicText( $this->{test_web}, "TemplateTopic",
         $testtext1 );
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             templatetopic => ['TemplateTopic'],
             action        => ['save'],
@@ -753,18 +791,22 @@ sub test_templateTopicWithMeta {
     my $pref = $meta->get( 'PREFERENCE', 'VIEW_TEMPLATE' );
     $this->assert_not_null($pref);
     $this->assert_str_equals( 'UserTopic', $pref->{value} );
+
+    return;
 }
 
 # attachments are copied over from templatetopic
 sub test_templateTopicWithAttachments {
     my $this = shift;
 
-    open( FILE, ">", "$Foswiki::cfg{TempfileDir}/testfile.txt" );
-    print FILE "one two three";
-    close(FILE);
-    open( FILE, ">", "$Foswiki::cfg{TempfileDir}/testfile2.txt" );
-    print FILE "four five six";
-    close(FILE);
+    $this->assert(
+        open( my $FILE, ">", "$Foswiki::cfg{TempfileDir}/testfile.txt" ) );
+    print $FILE "one two three";
+    $this->assert( close($FILE) );
+    $this->assert(
+        open( $FILE, ">", "$Foswiki::cfg{TempfileDir}/testfile2.txt" ) );
+    print $FILE "four five six";
+    $this->assert( close($FILE) );
 
     my $templateTopic = "TemplateTopic";
     my $testTopic     = "TemplateTopicWithAttachment";
@@ -791,7 +833,7 @@ sub test_templateTopicWithAttachments {
         }
     );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             templatetopic => ['TemplateTopic'],
             action        => ['save'],
@@ -817,6 +859,8 @@ sub test_templateTopicWithAttachments {
         "testfile.txt copied" );
     $this->assert( $meta->testAttachment( "testfile2.txt", 'e' ),
         "testfile2.txt copied" );
+
+    return;
 }
 
 #Mergeing is only enabled if the topic text comes from =text= and =originalrev= is &gt; 0 and is not the same as the revision number of the most recent revision. If mergeing is enabled both the topic and the meta-data are merged.
@@ -843,7 +887,7 @@ sub test_merge {
 
     # Now build a query for the save at the end of the first edit,
     # forcing a revision increment.
-    my $query1 = new Unit::Request(
+    my $query1 = Unit::Request->new(
         {
             action               => ['save'],
             text                 => ["Soggy bat"],
@@ -855,7 +899,7 @@ sub test_merge {
             'Checkbox'           => ['red'],
             'CheckboxandButtons' => ['hamster'],
             'Textfield'          => ['Bat'],
-            'Textarea'           => [ <<GUMP ],
+            'Textarea'           => [ <<'GUMP' ],
 Glug Glug
 Blog Glog
 Bungdit Din
@@ -874,7 +918,7 @@ GUMP
 
     # Build a second query for the other save, based on the same original
     # version as the previous edit
-    my $query2 = new Unit::Request(
+    my $query2 = Unit::Request->new(
         {
             action               => ['save'],
             text                 => ["Wet rat"],
@@ -885,7 +929,7 @@ GUMP
             'Checkbox'           => ['red'],
             'CheckboxandButtons' => ['hamster'],
             'Textfield'          => ['Rat'],
-            'Textarea'           => [ <<GUMP ],
+            'Textarea'           => [ <<'GUMP' ],
 Spletter Glug
 Blog Splut
 Bungdit Din
@@ -933,13 +977,15 @@ END
     $v = $meta->get( 'FIELD', 'Textfield' );
     $this->assert_str_equals( '<del>Bat</del><ins>Rat</ins>', $v->{value} );
     $v = $meta->get( 'FIELD', 'Textarea' );
-    $this->assert_str_equals( <<ZIS, $v->{value} );
+    $this->assert_str_equals( <<'ZIS', $v->{value} );
 <del>Glug </del><ins>Spletter </ins>Glug
 Blog <del>Glog
 </del><ins>Splut
 </ins>Bungdit Din
 Glaggie
 ZIS
+
+    return;
 }
 
 # CC commented this test out, because it doesn't bear any relationship to any
@@ -948,7 +994,7 @@ ZIS
 #    my $this = shift;
 #
 #    # first write topic without meta
-#    my $query = new Unit::Request({
+#    my $query = Unit::Request->new({
 #        text => [ 'FIRST REVISION' ],
 #        action => [ 'save' ],
 #        topic => [ $this->{test_web}.'.DeleteTestRestoreRevisionTopic' ]
@@ -965,7 +1011,7 @@ ZIS
 #    $this->assert_equals(1, $info->{version});
 #
 #    # write second revision with meta
-#    $query = new Unit::Request({
+#    $query = Unit::Request->new({
 #                         action => [ 'save' ],
 #			 text   => [ 'SECOND REVISION' ],
 #			             originalrev => $original,
@@ -989,7 +1035,7 @@ ZIS
 #
 #    # now restore topic to revision 1
 #    # the form should be removed as well
-#    $query = new Unit::Request({
+#    $query = Unit::Request->new({
 #        action => [ 'manage' ],
 #        rev => 1,
 #        forcenewrevision => 1,
@@ -1007,7 +1053,7 @@ ZIS
 #
 #    # and restore topic to revision 2
 #    # the form should be re-appended
-#    $query = new Unit::Request({
+#    $query = Unit::Request->new({
 #        action => [ 'manage' ],
 #        rev => 2,
 #        forcenewrevision => 1,
@@ -1069,7 +1115,7 @@ sub test_1897 {
     sleep(1);    # tick the clock to ensure the date changes
 
     # A saves again, reprev triggers to create rev 1 again
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             action      => ['save'],
             text        => ["Sweaty\ncat"],
@@ -1092,7 +1138,7 @@ sub test_1897 {
     $this->assert( $repRevDate != $orgDate );
 
     # User B saves; make sure we get a merge notice.
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             action      => ['save'],
             text        => ["Smelly\nrat"],
@@ -1124,11 +1170,13 @@ sub test_1897 {
 "<del>Sweaty\n</del><ins>Smelly\n</ins><del>cat\n</del><ins>rat\n</ins>",
         $text
     );
+
+    return;
 }
 
 sub test_missingTemplateTopic {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             templatetopic => ['NonExistantTemplateTopic'],
             action        => ['save'],
@@ -1147,11 +1195,13 @@ sub test_missingTemplateTopic {
     otherwise {
         $this->assert( 0, shift );
     };
+
+    return;
 }
 
 sub test_addform {
     my $this  = shift;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action => ['addform'],
             topic  => ["$this->{test_web}.$this->{test_topic}"],
@@ -1173,12 +1223,14 @@ sub test_addform {
     catch Error::Simple with {
         $this->assert( 0, shift );
     };
+
+    return;
 }
 
 sub test_get {
     my $this = shift;
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action => ['save'],
             topic  => ["$this->{test_web}.$this->{test_topic}"]
@@ -1192,6 +1244,8 @@ sub test_get {
         $this->assert_matches( qr/^Status: 403.*$/m, $text );
     }
     catch Error::Simple with {};
+
+    return;
 }
 
 1;
