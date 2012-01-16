@@ -23,6 +23,9 @@ sub set_up {
 
     $this->SUPER::set_up();
 
+    $this->createNewFoswikiSession();
+    $Foswiki::cfg{Htpasswd}{FileName} = "$Foswiki::cfg{TempfileDir}/junkpasswd";
+
     $this->{users1} = {
         alligator => { pass => 'hissss', emails => 'ally@masai.mara' },
         bat => { pass => 'ultrasonic squeal', emails => 'bat@belfry' },
@@ -62,7 +65,6 @@ sub loadExtraConfig {
 sub tear_down {
     my $this = shift;
     unlink $Foswiki::cfg{Htpasswd}{FileName};
-
     $this->SUPER::tear_down();
 }
 
