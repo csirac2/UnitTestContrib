@@ -3,7 +3,7 @@ package ZoneTests;
 use strict;
 use warnings;
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
 sub set_up {
@@ -16,10 +16,12 @@ sub set_up {
     $Foswiki::cfg{Plugins}{TwistyPlugin}{Enabled} = 0;
     $Foswiki::cfg{Plugins}{TablePlugin}{Enabled}  = 0;
 
-    my $query = new Unit::Request("");
+    my $query = Unit::Request->new("");
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
 
     $this->createNewFoswikiSession( undef, $query );
+
+    return;
 }
 
 sub test_1 {
@@ -430,6 +432,8 @@ HERE
     $tml = $this->{test_topicObject}->expandMacros($tml);
     my $result = $this->{session}->_renderZones($tml);
     $this->assert_str_equals( $expect, $result );
+
+    return;
 }
 
 sub test_explicit_RENDERZONE_unmerged {
@@ -463,6 +467,8 @@ HERE
     $tml = $this->{test_topicObject}->expandMacros($tml);
     my $result = $this->{session}->_renderZones($tml);
     $this->assert_str_equals( $expect, $result );
+
+    return;
 }
 
 sub test_legacy_tag_param_compatibility {
@@ -524,6 +530,8 @@ HERE
     $tml = $this->{test_topicObject}->expandMacros($tml);
     my $result = $this->{session}->_renderZones($tml);
     $this->assert_str_equals( $expect, $result );
+
+    return;
 }
 
 1;
