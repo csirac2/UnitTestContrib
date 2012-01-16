@@ -3,11 +3,11 @@ package ConfigureTests;
 use strict;
 use warnings;
 
-use FoswikiTestCase;
+use FoswikiTestCase();
 our @ISA = qw( FoswikiTestCase );
 
 use Error qw( :try );
-use File::Temp;
+use File::Temp();
 use FindBin;
 use File::Path qw(mkpath rmtree);
 
@@ -37,16 +37,20 @@ sub set_up {
     $this->{test_web} = 'Testsystemweb1234';
     my $webObject = Foswiki::Meta->new( $this->{session}, $this->{test_web} );
     $webObject->populateNewWeb();
+    $webObject->finish();
     $this->{trash_web} = 'Testtrashweb1234';
     $webObject = Foswiki::Meta->new( $this->{session}, $this->{trash_web} );
     $webObject->populateNewWeb();
+    $webObject->finish();
     $this->{sandbox_web} = 'Testsandboxweb1234';
     $webObject = Foswiki::Meta->new( $this->{session}, $this->{sandbox_web} );
     $webObject->populateNewWeb();
+    $webObject->finish();
     $this->{sandbox_subweb} = 'Testsandboxweb1234/Subweb';
     $webObject =
       Foswiki::Meta->new( $this->{session}, $this->{sandbox_subweb} );
     $webObject->populateNewWeb();
+    $webObject->finish();
     $this->{tempdir} = $Foswiki::cfg{TempfileDir} . '/test_ConfigureTests';
     rmtree( $this->{tempdir} )
       if ( -e $this->{tempdir} );    # Cleanup any old tests
@@ -1925,7 +1929,7 @@ sub test_Package_errors {
     $pkg->repository($repository);
     my ( $result, $err ) = $pkg->loadInstaller();
 
-    my $expected = <<HERE;
+    my $expected = <<'HERE';
 I can't download http://foswiki.org/pub/Extensions/EmptyPluginx/EmptyPluginx_installer because of the following error:
 Not Found
 HERE
