@@ -22,9 +22,7 @@ sub _reset_session_with_cuid {
 
     $query->path_info( $query_opts->{path_info} ) if $query_opts->{path_info};
     $cuid ||= $this->{test_user_login};
-    $this->{session}->finish();
-    $this->{session} = Foswiki->new( $cuid, $query );
-    $Foswiki::Plugins::SESSION = $this->{session};
+    $this->createNewFoswikiSession( $cuid, $query );
 
     return;
 }
