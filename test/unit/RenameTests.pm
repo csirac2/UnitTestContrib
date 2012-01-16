@@ -2,13 +2,13 @@ package RenameTests;
 use strict;
 use warnings;
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
-use Foswiki::UI::Rename;
+use Foswiki();
+use Foswiki::UI::Rename();
 use Error ':try';
-use File::Temp;
+use File::Temp();
 
 my $notawwtopic1 = "random";
 my $notawwtopic2 = "Random";
@@ -1340,7 +1340,7 @@ sub test_renameTopic_TOPICRENAME_access_denied {
 
     try {
         no strict 'refs';
-        my ( $text, $result ) = &$UI_FN( $this->{session} );
+        my ( $text, $result ) = &{$UI_FN}( $this->{session} );
         use strict 'refs';
         $this->assert(0);
     }
