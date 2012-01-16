@@ -1,11 +1,10 @@
-use strict;
-
 package SemiAutomaticTestCaseTests;
+use strict;
+use warnings;
 
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
 use Foswiki;
 use Foswiki::UI::View;
 use Error qw( :try );
@@ -43,8 +42,8 @@ sub list_tests {
     my ( $this, $suite ) = @_;
     my @set = $this->SUPER::list_tests(@_);
 
-    my $wiki = new Foswiki();
-    unless ( $wiki->webExists('TestCases') ) {
+    $this->createNewFoswikiSession();
+    unless ( $this->{session}->webExists('TestCases') ) {
         print STDERR
           "Cannot run semi-automatic test cases; TestCases web not found";
         return;
@@ -53,7 +52,6 @@ sub list_tests {
     if ($@) {
         print STDERR
 "Cannot run semi-automatic test cases; could not find TestFixturePlugin";
-        $wiki->finish();
         return;
     }
     foreach my $case ( Foswiki::Func::getTopicList('TestCases') ) {
@@ -64,7 +62,6 @@ sub list_tests {
         use strict 'refs';
         push( @set, $test );
     }
-    $wiki->finish();
     return @set;
 }
 
@@ -82,19 +79,19 @@ sub run_testcase {
     $Foswiki::cfg{Plugins}{TestFixturePlugin}{Enabled} = 1;
     $Foswiki::cfg{Plugins}{TestFixturePlugin}{Module} =
       'Foswiki::Plugins::TestFixturePlugin';
-    my $wiki = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my $topicObject =
       Foswiki::Meta->new( $this->{session}, $this->{users_web},
         'ProjectContributor', 'none' );
     $topicObject->save();
-    my ($text) = $this->capture( $VIEW_UI_FN, $wiki );
+    my ($text) = $this->capture( $VIEW_UI_FN, $this->{session});
 
     unless ( $text =~ m#<font color="green">ALL TESTS PASSED</font># ) {
         open( F, ">${testcase}_run.html" );
         print F $text;
         close F;
         $query->delete('test');
-        ($text) = $this->capture( $VIEW_UI_FN, $wiki );
+        ($text) = $this->capture( $VIEW_UI_FN, $this->{session});
         open( F, ">${testcase}.html" );
         print F $text;
         close F;
@@ -102,7 +99,6 @@ sub run_testcase {
 "$testcase FAILED - output in ${testcase}.html and ${testcase}_run.html"
         );
     }
-    $wiki->finish();
 }
 
 sub test_suppresswarning {
