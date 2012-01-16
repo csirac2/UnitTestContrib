@@ -1,22 +1,17 @@
-use strict;
-
 package PasswordTests;
+use strict;
+use warnings;
 
-use FoswikiTestCase;
+use FoswikiTestCase();
 our @ISA = qw( FoswikiTestCase );
 
-use Foswiki;
-use Foswiki::Users;
-use Foswiki::Users::HtPasswdUser;
+use Assert;
+use Config;
+use Foswiki();
+use Foswiki::Users();
+use Foswiki::Users::HtPasswdUser();
 
 my $SALTED = 1;
-
-use Config;
-
-sub new {
-    my $self = shift()->SUPER::new(@_);
-    return $self;
-}
 
 sub set_up {
     my $this = shift();
@@ -47,6 +42,8 @@ sub set_up {
         mole =>
           { pass => 'earthworm', emails => $this->{users1}->{mole}->{emails} },
     };
+
+    return;
 }
 
 sub loadExtraConfig {
@@ -66,6 +63,8 @@ sub tear_down {
     my $this = shift;
     unlink $Foswiki::cfg{Htpasswd}{FileName};
     $this->SUPER::tear_down();
+
+    return;
 }
 
 sub doTests {
@@ -196,14 +195,16 @@ sub doTests {
             );
         }
     }
+
+    return;
 }
 
 sub test_disabled_entry {
     my $this = shift;
 
     foreach my $m (qw( Digest::SHA Crypt::PasswdMD5 )) {
-        eval "use $m";
-        if ($@) {
+
+        if ( !eval "require $m; 1;" ) {
             my $mess = $@;
             $mess =~ s/\(\@INC contains:.*$//s;
             $this->expect_failure();
@@ -231,7 +232,7 @@ budgie:{SHA}2jmj7l5rSw0yVb/vlWAYkK/YBwk=:sha1@example.com
 lion:MyNewRealm:cb90fdb9780b69d08562744db4bfa07f:htdigest-md5@example.com
 mole:$1$QC5tIZEi$0sLeg6YAc4I64Zn/4pPnU1:crypt-md5@example.com
 DONE
-    close($fh);
+    $this->assert( close($fh) );
 
     foreach my $user ( 'alligator', 'bat', 'budgie', 'lion', 'mole' ) {
         $this->assert( $impl->checkPassword( $user, '' ) );
@@ -254,7 +255,7 @@ sha1::sha1@example.com
 htdigest-md5:MyNewRealm::htdigest-md5@example.com
 crypt-md5::crypt-md5@example.com
 DONE
-    close($fh);
+    $this->assert( close($fh) );
 
     foreach
       my $algo ( 'apache-md5', 'htdigest-md5', 'crypt', 'sha1', 'crypt-md5' )
@@ -292,14 +293,15 @@ DONE
             "Failure for $user" );
     }
 
+    return;
 }
 
 sub test_htpasswd_auto {
     my $this = shift;
 
     foreach my $m (qw( Digest::SHA Crypt::PasswdMD5 )) {
-        eval "use $m";
-        if ($@) {
+
+        if ( !eval "require $m; 1;" ) {
             my $mess = $@;
             $mess =~ s/\(\@INC contains:.*$//s;
             $this->expect_failure();
@@ -334,7 +336,7 @@ dodo:$1$pUXqkX97$zqxdNSnpusVmoB.B.aUhB/:dodo@extinct
 lion:MyNewRealmm:3e60f5f16dc3b8658879d316882a3f00:lion@pride
 mole:plainpasswordx:mole@hill
 DONE
-    close($fh);
+    $this->assert( close($fh) );
 
     # First try - no emails in file
     # check it
@@ -371,7 +373,7 @@ dodo:$1$pUXqkX97$zqxdNSnpusVmoB.B.aUhB/:dodo@extinct
 lion:MyNewRealmm:3e60f5f16dc3b8658879d316882a3f00:lion@pride
 mole:plainpasswordx:mole@hill
 DONE
-    close($fh);
+    $this->assert( close($fh) );
 
     # check it
     foreach my $user ( sort keys %{ $this->{users1} } ) {
@@ -483,15 +485,19 @@ DONE
     }
 
     #dumpFile();
+
+    return;
 }
 
 sub dumpFile {
-    my $IN_FILE;
-    open( $IN_FILE, '<', "$Foswiki::cfg{TempfileDir}/junkpasswd" );
+    open( my $IN_FILE, '<', "$Foswiki::cfg{TempfileDir}/junkpasswd" ) or die $!;
     my $line;
     while ( defined( $line = <$IN_FILE> ) ) {
         print STDERR $line . "\n";
     }
+    ASSERT( close($IN_FILE) );
+
+    return;
 }
 
 sub test_htpasswd_crypt_md5 {
@@ -504,6 +510,7 @@ sub test_htpasswd_crypt_md5 {
     $this->assert($impl);
     $this->doTests( $impl, $SALTED );
 
+    return;
 }
 
 sub test_htpasswd_crypt_crypt {
@@ -514,13 +521,14 @@ sub test_htpasswd_crypt_crypt {
     $impl->ClearCache() if $impl->can('ClearCache');
     $this->assert($impl);
     $this->doTests( $impl, $SALTED );
+
+    return;
 }
 
 sub test_htpasswd_sha1 {
     my $this = shift;
 
-    eval 'use Digest::SHA';
-    if ($@) {
+    if ( !eval 'require Digest::SHA; 1;' ) {
         my $mess = $@;
         $mess =~ s/\(\@INC contains:.*$//s;
         $this->expect_failure();
@@ -534,6 +542,8 @@ sub test_htpasswd_sha1 {
     $impl->ClearCache() if $impl->can('ClearCache');
     $this->assert($impl);
     $this->doTests($impl);
+
+    return;
 }
 
 sub test_htpasswd_plain {
@@ -549,6 +559,7 @@ sub test_htpasswd_plain {
     $this->assert($impl);
     $this->doTests($impl);
 
+    return;
 }
 
 sub test_htpasswd_md5 {
@@ -562,6 +573,7 @@ sub test_htpasswd_md5 {
     $this->assert($impl);
     $this->doTests($impl);
 
+    return;
 }
 
 sub test_htpasswd_htdigest_md5 {
@@ -579,12 +591,14 @@ sub test_htpasswd_htdigest_md5 {
     $Foswiki::cfg{Htpasswd}{Encoding} = 'md5';
     $impl = Foswiki::Users::HtPasswdUser->new( $this->{session} );
     foreach my $user ( sort keys %{ $this->{users1} } ) {
-        if ( $user !~ /(alligator|mole|budgie)/ ) {
+        if ( $user !~ /(?:alligator|mole|budgie)/ ) {
             $this->assert(
                 $impl->checkPassword( $user, $this->{users2}->{$user}->{pass} )
             );
         }
     }
+
+    return;
 }
 
 sub test_htpasswd_htdigest_preserves_email {
@@ -620,12 +634,14 @@ sub test_htpasswd_htdigest_preserves_email {
             join( ";", $impl->getEmails($user) )
         );
     }
+
+    return;
 }
 
 sub test_htpasswd_apache_md5 {
     my $this = shift;
-    eval 'use Crypt::PasswdMD5';
-    if ($@) {
+
+    if ( !eval 'require Crypt::PasswdMD5; 1;' ) {
         my $mess = $@;
         $mess =~ s/\(\@INC contains:.*$//s;
         $this->expect_failure();
@@ -639,6 +655,8 @@ sub test_htpasswd_apache_md5 {
     $impl->ClearCache() if $impl->can('ClearCache');
     $this->assert($impl);
     $this->doTests( $impl, 0 );
+
+    return;
 }
 
 sub test_ApacheHtpasswdUser_md5 {
@@ -646,16 +664,15 @@ sub test_ApacheHtpasswdUser_md5 {
 
     $Foswiki::cfg{Htpasswd}{AutoDetect} = 0;
     $Foswiki::cfg{Htpasswd}{Encoding}   = 'apache-md5';
-    eval "use Apache::Htpasswd";
-    if ($@) {
+
+    if ( !eval "require Apache::Htpasswd; 1;" ) {
         my $mess = $@;
         $mess =~ s/\(\@INC contains:.*$//s;
         $this->expect_failure();
         $this->annotate("CANNOT RUN APACHE HTPASSWD TESTS: $mess");
     }
 
-    eval "use Foswiki::Users::ApacheHtpasswdUser";
-    if ($@) {
+    if ( !eval "require Foswiki::Users::ApacheHtpasswdUser; 1;" ) {
         my $mess = $@;
         $mess =~ s/\(\@INC contains:.*$//s;
         $this->expect_failure();
@@ -671,12 +688,14 @@ sub test_ApacheHtpasswdUser_md5 {
     $impl = Foswiki::Users::HtPasswdUser->new( $this->{session} );
     $impl->ClearCache() if $impl->can('ClearCache');
     foreach my $user ( sort keys %{ $this->{users1} } ) {
-        if ( $user !~ /(alligator|mole|budgie)/ ) {
+        if ( $user !~ /(?:alligator|mole|budgie)/ ) {
             $this->assert(
                 $impl->checkPassword( $user, $this->{users2}->{$user}->{pass} )
             );
         }
     }
+
+    return;
 }
 
 sub test_ApacheHtpasswdUser_crypt {
@@ -689,16 +708,15 @@ sub test_ApacheHtpasswdUser_crypt {
 
     $Foswiki::cfg{Htpasswd}{AutoDetect} = 0;
     $Foswiki::cfg{Htpasswd}{Encoding}   = 'crypt';
-    eval "use Apache::Htpasswd";
-    if ($@) {
+
+    if ( !eval "require Apache::Htpasswd; 1;" ) {
         my $mess = $@;
         $mess =~ s/\(\@INC contains:.*$//s;
         $this->expect_failure();
         $this->annotate("CANNOT RUN APACHE HTPASSWD TESTS: $mess");
     }
 
-    eval "use Foswiki::Users::ApacheHtpasswdUser";
-    if ($@) {
+    if ( !eval "require Foswiki::Users::ApacheHtpasswdUser; 1;" ) {
         my $mess = $@;
         $mess =~ s/\(\@INC contains:.*$//s;
         $this->expect_failure();
@@ -713,12 +731,14 @@ sub test_ApacheHtpasswdUser_crypt {
     $impl = Foswiki::Users::HtPasswdUser->new( $this->{session} );
     $impl->ClearCache() if $impl->can('ClearCache');
     foreach my $user ( sort keys %{ $this->{users1} } ) {
-        if ( $user !~ /(alligator|mole|budgie)/ ) {
+        if ( $user !~ /(?:alligator|mole|budgie)/ ) {
             $this->assert(
                 $impl->checkPassword( $user, $this->{users2}->{$user}->{pass} )
             );
         }
     }
+
+    return;
 }
 
 # SMELL: Apache;:Htpasswd Version 1.8  doesn't appear to actually support writing
@@ -729,16 +749,15 @@ sub DISABLE_test_ApacheHtpasswdUser_plain {
 
     $Foswiki::cfg{Htpasswd}{AutoDetect} = 0;
     $Foswiki::cfg{Htpasswd}{Encoding}   = 'plain';
-    eval "use Apache::Htpasswd";
-    if ($@) {
+
+    if ( !eval "require Apache::Htpasswd; 1;" ) {
         my $mess = $@;
         $mess =~ s/\(\@INC contains:.*$//s;
         $this->expect_failure();
         $this->annotate("CANNOT RUN APACHE HTPASSWD TESTS: $mess");
     }
 
-    eval "use Foswiki::Users::ApacheHtpasswdUser";
-    if ($@) {
+    if ( !eval "require Foswiki::Users::ApacheHtpasswdUser; 1;" ) {
         my $mess = $@;
         $mess =~ s/\(\@INC contains:.*$//s;
         $this->expect_failure();
@@ -753,11 +772,13 @@ sub DISABLE_test_ApacheHtpasswdUser_plain {
     $impl = Foswiki::Users::HtPasswdUser->new( $this->{session} );
     $impl->ClearCache() if $impl->can('ClearCache');
     foreach my $user ( sort keys %{ $this->{users1} } ) {
-        if ( $user !~ /(alligator|mole|budgie)/ ) {
+        if ( $user !~ /(?:alligator|mole|budgie)/ ) {
             $this->assert(
                 $impl->checkPassword( $user, $this->{users2}->{$user}->{pass} )
             );
         }
     }
+
+    return;
 }
 1;
