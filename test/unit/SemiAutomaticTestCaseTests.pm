@@ -39,6 +39,8 @@ sub set_up {
         );
         $to->save();
     }
+
+    return;
 }
 
 sub list_tests {
@@ -51,8 +53,8 @@ sub list_tests {
           "Cannot run semi-automatic test cases; TestCases web not found";
         return;
     }
-    eval "use Foswiki::Plugins::TestFixturePlugin";
-    if ($@) {
+
+    if ( !eval "require Foswiki::Plugins::TestFixturePlugin; 1;" ) {
         print STDERR
 "Cannot run semi-automatic test cases; could not find TestFixturePlugin";
         return;
@@ -61,7 +63,7 @@ sub list_tests {
         next unless $case =~ /^TestCaseAuto/;
         my $test = 'SemiAutomaticTestCaseTests::test_' . $case;
         no strict 'refs';
-        *$test = sub { shift->run_testcase($case) };
+        *{$test} = sub { shift->run_testcase($case) };
         use strict 'refs';
         push( @set, $test );
     }
@@ -71,7 +73,7 @@ sub list_tests {
 
 sub run_testcase {
     my ( $this, $testcase ) = @_;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             test => 'compare',
             debugenableplugins =>
@@ -85,28 +87,32 @@ sub run_testcase {
     $Foswiki::cfg{Plugins}{TestFixturePlugin}{Module} =
       'Foswiki::Plugins::TestFixturePlugin';
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{users_web},
-        'ProjectContributor', 'none' );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{users_web}, 'ProjectContributor' );
+    $topicObject->text('none');
     $topicObject->save();
+    $topicObject->finish();
     my ($text) = $this->capture( $VIEW_UI_FN, $this->{session} );
 
     unless ( $text =~ m#<font color="green">ALL TESTS PASSED</font># ) {
-        open( F, ">${testcase}_run.html" );
-        print F $text;
-        close F;
+        $this->assert( open( my $F, '>', "${testcase}_run.html" ) );
+        print $F $text;
+        $this->assert( close $F );
         $query->delete('test');
         ($text) = $this->capture( $VIEW_UI_FN, $this->{session} );
-        open( F, ">${testcase}.html" );
-        print F $text;
-        close F;
+        $this->assert( open( $F, '>', "${testcase}.html" ) );
+        print $F $text;
+        $this->assert( close $F );
         $this->assert( 0,
 "$testcase FAILED - output in ${testcase}.html and ${testcase}_run.html"
         );
     }
+
+    return;
 }
 
 sub test_suppresswarning {
+    return;
 }
 
 1;
