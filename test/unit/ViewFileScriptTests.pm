@@ -1,9 +1,10 @@
 package ViewFileScriptTests;
+use strict;
+use warnings;
 
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
 use Foswiki;
 use Foswiki::UI;
 use Foswiki::UI::Viewfile;
@@ -11,7 +12,6 @@ use Unit::Request;
 use Error qw( :try );
 use File::Path qw(mkpath);
 
-my $fatwilly;
 my $UI_FN;
 
 sub new {
@@ -28,7 +28,6 @@ sub set_up {
     my $this = shift;
     $this->SUPER::set_up();
 
-    $fatwilly = $this->{session};
     my $topic = 'TestTopic1';
     my $topicObject =
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, $topic,
@@ -50,7 +49,7 @@ sub set_up {
     $topic = 'TestTopic1';
 
     try {
-        $this->{session} = new Foswiki('AdminUser');
+        $this->createNewFoswikiSession('AdminUser');
 
         my $webObject =
           Foswiki::Meta->new( $this->{session}, $this->{test_subweb} );
@@ -147,7 +146,7 @@ sub viewfile {
     my $query = new Unit::Request( {} );
     $query->setUrl($url);
     $query->method('GET');
-    $fatwilly = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $UI_FN ||= $this->getUIFn('viewfile');
     $this->{request}  = $query;
     $this->{response} = new Unit::Response();
@@ -155,18 +154,17 @@ sub viewfile {
         sub {
             try {
                 no strict 'refs';
-                &$UI_FN($fatwilly);
+                &$UI_FN( $this->{session} );
                 use strict 'refs';
             }
             catch Error with {
-                $fatwilly->{response}->print( shift->stringify() );
+                $this->{session}{response}->print( shift->stringify() );
             }
-            $Foswiki::engine->finalize( $fatwilly->{response},
-                $fatwilly->{request} );
+            $Foswiki::engine->finalize( $this->{session}{response},
+                $this->{session}{request} );
         }
     );
 
-    $fatwilly->finish();
     ( my $headers, $text ) = $text =~ m/^(.*?)\x0d\x0a\x0d\x0a(.*)/s;
 
     return ($wantHdrs) ? ( $headers, $text ) : $text;
