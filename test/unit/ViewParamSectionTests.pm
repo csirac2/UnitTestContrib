@@ -2,19 +2,14 @@ package ViewParamSectionTests;
 use strict;
 use warnings;
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
-use Foswiki::UI::View;
-use Unit::Request;
-use Unit::Response;
+use Foswiki();
+use Foswiki::UI::View();
+use Unit::Request();
+use Unit::Response();
 my $UI_FN;
-
-sub new {
-    my $self = shift()->SUPER::new(@_);
-    return $self;
-}
 
 # Set up the test fixture
 sub set_up {
@@ -22,16 +17,20 @@ sub set_up {
 
     $this->SUPER::set_up();
     $UI_FN ||= $this->getUIFn('view');
-    my $query = new Unit::Request();
+    my $query = Unit::Request->new();
     $this->createNewFoswikiSession( undef, $query );
     $this->{request}  = $query;
-    $this->{response} = new Unit::Response();
+    $this->{response} = Unit::Response->new();
+
+    return;
 }
 
 sub tear_down {
     my $this = shift;
 
     $this->SUPER::tear_down();
+
+    return;
 }
 
 sub _viewSection {
@@ -62,6 +61,8 @@ sub test_sectionFirst {
 
     my $result = $this->_viewSection('first');
     $this->assert_matches( qr(^\s*This is the first section\s*$)s, $result );
+
+    return;
 }
 
 # ----------------------------------------------------------------------
@@ -78,6 +79,8 @@ sub test_sectionOuter {
         $result );
     $this->assert_matches( qr(This is the end of the outer section\s*$)s,
         $result );
+
+    return;
 }
 
 # ----------------------------------------------------------------------
@@ -89,6 +92,8 @@ sub test_sectionInner {
     my $result = $this->_viewSection('inner');
     $this->assert_matches(
         qr(^\s*This is the whole content of the inner section\s*$)s, $result );
+
+    return;
 }
 
 # ----------------------------------------------------------------------
@@ -101,6 +106,8 @@ sub test_sectionNotExisting {
 
     my $result = $this->_viewSection('notExisting');
     $this->assert_matches( qr/\s*/, $result );
+
+    return;
 }
 
 1;
