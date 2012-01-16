@@ -18,22 +18,23 @@ use diagnostics;
 # Note that the FoswikiFnTestCase needs to use the registration code to work,
 # so this is a bit arse before tit. However we need some pre-registered users
 # for this to work sensibly, so we just have to bite the bullet.
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki::UI::Register;
+use Foswiki::UI::Register();
 use Data::Dumper;
-use FileHandle;
+use FileHandle();
+use File::Copy();
+use File::Path();
+use Carp();
+use Cwd();
 use Error qw( :try );
-use File::Copy;
-use File::Path;
-use Carp;
-use Cwd;
 
 my $systemWeb = "TemporaryRegisterTestsSystemWeb";
 
 sub new {
-    my $this = shift()->SUPER::new( 'Registration', @_ );
+    my ( $class, @args ) = @_;
+    my $this = $class->SUPER::new( 'Registration', @args );
 
     # your state for fixture here
     return $this;
@@ -78,7 +79,7 @@ EOF
         # them where necessary (e.g. for bulk registration)
         $topicObject =
           Foswiki::Meta->new( $this->{session}, $this->{users_web},
-            $Foswiki::cfg{SuperAdminGroup}, <<EOF);
+            $Foswiki::cfg{SuperAdminGroup}, <<"EOF");
    * Set GROUP = $this->{test_user_wikiname}
 EOF
         $topicObject->save();
@@ -111,6 +112,8 @@ EOF
     $Error::Debug = 1;
 
     @FoswikiFnTestCase::mails = ();
+
+    return;
 }
 
 sub tear_down {
@@ -118,6 +121,8 @@ sub tear_down {
 
     $this->removeWebFixture( $this->{session}, $systemWeb );
     $this->SUPER::tear_down();
+
+    return;
 }
 
 # fixture
@@ -126,7 +131,7 @@ sub registerAccount {
 
     $this->registerVerifyOk();
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'code'   => [ $this->{session}->{DebugVerificationCode} ],
             'action' => ['verify']
@@ -180,6 +185,8 @@ qr/To: $Foswiki::cfg{WebMasterName} <$Foswiki::cfg{WebMasterEmail}>/,
             $this->{new_user_wikiname}
         )
     );
+
+    return;
 }
 ###################################
 #verify tests
@@ -187,6 +194,8 @@ qr/To: $Foswiki::cfg{WebMasterName} <$Foswiki::cfg{WebMasterEmail}>/,
 sub AllowLoginName {
     my $this = shift;
     $Foswiki::cfg{Register}{AllowLoginName} = 1;
+
+    return;
 }
 
 sub DontAllowLoginName {
@@ -195,38 +204,54 @@ sub DontAllowLoginName {
     $this->{new_user_login} = $this->{new_user_wikiname};
 
     #$this->{test_user_login} = $this->{test_user_wikiname};
+
+    return;
 }
 
 sub TemplateLoginManager {
     $Foswiki::cfg{LoginManager} = 'Foswiki::LoginManager::TemplateLogin';
+
+    return;
 }
 
 sub ApacheLoginManager {
     $Foswiki::cfg{LoginManager} = 'Foswiki::LoginManager::ApacheLogin';
+
+    return;
 }
 
 sub NoLoginManager {
     $Foswiki::cfg{LoginManager} = 'Foswiki::LoginManager';
+
+    return;
 }
 
 sub HtPasswdManager {
     $Foswiki::cfg{PasswordManager} = 'Foswiki::Users::HtPasswdUser';
+
+    return;
 }
 
 sub NonePasswdManager {
     $Foswiki::cfg{PasswordManager} = 'none';
+
+    return;
 }
 
 sub BaseUserMapping {
     my $this = shift;
     $Foswiki::cfg{UserMappingManager} = 'Foswiki::Users::BaseUserMapping';
     $this->set_up_for_verify();
+
+    return;
 }
 
 sub TopicUserMapping {
     my $this = shift;
     $Foswiki::cfg{UserMappingManager} = 'Foswiki::Users::TopicUserMapping';
     $this->set_up_for_verify();
+
+    return;
 }
 
 # See the pod doc in Unit::TestCase for details of how to use this
@@ -254,6 +279,8 @@ sub set_up_for_verify {
     $this->createNewFoswikiSession();
 
     @FoswikiFntestCase::mails = ();
+
+    return;
 }
 
 ###################################
@@ -287,6 +314,8 @@ sub verify_userTopicWithPMWithoutForm {
         $text );
     $this->assert( $text =~ s/$this->{new_user_wikiname}//, $text );
     $this->assert_matches( qr/\s*AFTER\s*/, $text );
+
+    return;
 }
 
 sub verify_userTopicWithoutPMWithoutForm {
@@ -325,6 +354,8 @@ sub verify_userTopicWithoutPMWithoutForm {
         $text );
     $this->assert( $text =~ s/$this->{new_user_wikiname}//, $text );
     $this->assert_matches( qr/\s*AFTER\s*/, $text );
+
+    return;
 }
 
 sub verify_userTopicWithoutPMWithForm {
@@ -337,7 +368,7 @@ sub verify_userTopicWithoutPMWithForm {
     # Change the new user topic to include the form
     my $m =
       Foswiki::Meta->new( $this->{session}, $this->{users_web},
-        'NewUserTemplate', <<BODY );
+        'NewUserTemplate', <<"BODY" );
 %SPLIT%
 \t* Set %KEY% = %VALUE%
 %SPLIT%
@@ -417,6 +448,8 @@ BODY
         $this->assert_str_equals( $this->{new_user_email}, $field->{value} );
     }
     $this->assert_matches( qr/^\s*$/s, $text );
+
+    return;
 }
 
 sub verify_userTopicWithPMWithForm {
@@ -425,7 +458,7 @@ sub verify_userTopicWithPMWithForm {
     # Change the new user topic to include the form
     my $m =
       Foswiki::Meta->new( $this->{session}, $this->{users_web},
-        'NewUserTemplate', <<BODY );
+        'NewUserTemplate', <<"BODY" );
 %SPLIT%
 \t* Set %KEY% = %VALUE%
 %SPLIT%
@@ -495,6 +528,8 @@ BODY
     $this->assert_str_equals( '', $meta->get( 'FIELD', 'Comment' )->{value} );
     $this->assert_str_equals( '', $meta->get( 'FIELD', 'Email' )->{value} );
     $this->assert_matches( qr/^\s*$/s, $text );
+
+    return;
 }
 
 #Register a user, and then verify it
@@ -503,7 +538,7 @@ BODY
 sub registerVerifyOk {
     my $this = shift;
     $Foswiki::cfg{Register}{NeedVerification} = 1;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'     => ['UserRegistration'],
             'Fwk1Email'     => [ $this->{new_user_email} ],
@@ -551,7 +586,7 @@ sub registerVerifyOk {
     };
 
     my $code = shift || $this->{session}->{DebugVerificationCode};
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             'code'   => [$code],
             'action' => ['verify']
@@ -589,18 +624,24 @@ sub registerVerifyOk {
     }
     $this->assert($done);
     @FoswikiFnTestCase::mails = ();
+
+    return;
 }
 
 #Register a user using Fwk prefix, then give a bad verification code. It should barf.
 sub verify_registerBadVerify_Fwk {
-    my $this = shift;
-    $this->_registerBadVerify( 'Fwk', @_ );
+    my ( $this, @args ) = @_;
+    $this->_registerBadVerify( 'Fwk', @args );
+
+    return;
 }
 
 #Register a user using Twk prefix, then give a bad verification code. It should barf.
 sub verify_registerBadVerify_Twk {
-    my $this = shift;
-    $this->_registerBadVerify( 'Twk', @_ );
+    my ( $this, @args ) = @_;
+    $this->_registerBadVerify( 'Twk', @args );
+
+    return;
 }
 
 #Register a user, then give a bad verification code. It should barf.
@@ -608,7 +649,7 @@ sub _registerBadVerify {
     my $this = shift;
     my $pfx  = shift;
     $Foswiki::cfg{Register}{NeedVerification} = 1;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'        => ['UserRegistration'],
             "${pfx}1Email"     => [ $this->{new_user_email} ],
@@ -654,7 +695,7 @@ sub _registerBadVerify {
     };
 
     my $code = $this->{session}->{DebugVerificationCode};
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             'code'   => [$code],
             'action' => ['verify']
@@ -694,20 +735,26 @@ sub _registerBadVerify {
 
     # check the verification code
     $this->assert_matches( qr/'$code'/, $mess );
+
+    return;
 }
 
 # Register a user with verification explicitly switched off
 # (SUPER's tear_down will take care for re-installing %Foswiki::cfg)
 sub verify_registerNoVerifyOk_Twk {
-    my $this = shift;
-    $this->_registerNoVerifyOk( 'Twk', @_ );
+    my ( $this, @args ) = @_;
+    $this->_registerNoVerifyOk( 'Twk', @args );
+
+    return;
 }
 
 # Register a user with verification explicitly switched off
 # (SUPER's tear_down will take care for re-installing %Foswiki::cfg)
 sub verify_registerNoVerifyOk_Fwk {
-    my $this = shift;
-    $this->_registerNoVerifyOk( 'Fwk', @_ );
+    my ( $this, @args ) = @_;
+    $this->_registerNoVerifyOk( 'Fwk', @args );
+
+    return;
 }
 
 # Register a user with verification explicitly switched off
@@ -716,7 +763,7 @@ sub _registerNoVerifyOk {
     my $this = shift;
     my $pfx  = shift;
     $Foswiki::cfg{Register}{NeedVerification} = 0;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'        => ['UserRegistration'],
             "${pfx}1Email"     => [ $this->{new_user_email} ],
@@ -775,6 +822,8 @@ qr/To: $Foswiki::cfg{WebMasterName} <$Foswiki::cfg{WebMasterEmail}>/,
     otherwise {
         $this->assert( 0, "expected an oops redirect" );
     };
+
+    return;
 }
 
 # Register a user with a password which is too short - must be rejected
@@ -784,7 +833,7 @@ sub verify_rejectShortPassword {
     $Foswiki::cfg{MinPasswordLength}          = 6;
     $Foswiki::cfg{PasswordManager}            = 'Foswiki::Users::HtPasswdUser';
     $Foswiki::cfg{Register}{AllowLoginName}   = 0;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'    => ['UserRegistration'],
             'Twk1Email'    => [ $this->{new_user_email} ],
@@ -827,6 +876,8 @@ sub verify_rejectShortPassword {
     otherwise {
         $this->assert( 0, "expected an oops redirect" );
     };
+
+    return;
 }
 
 # Register a user with a password which is too short
@@ -836,7 +887,7 @@ sub verify_shortPassword {
     $Foswiki::cfg{MinPasswordLength}          = 6;
     $Foswiki::cfg{PasswordManager}            = 'Foswiki::Users::HtPasswdUser';
     $Foswiki::cfg{Register}{AllowLoginName}   = 1;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'     => ['UserRegistration'],
             'Twk1Email'     => [ $this->{new_user_email} ],
@@ -888,6 +939,8 @@ sub verify_shortPassword {
     otherwise {
         $this->assert( 0, "expected an oops redirect" );
     };
+
+    return;
 }
 
 # Purpose:  Test behaviour of duplicate activation (Item3105)
@@ -899,7 +952,7 @@ sub verify_duplicateActivation {
 
     # Start similar to registration with verification
     $Foswiki::cfg{Register}{NeedVerification} = 1;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'     => ['UserRegistration'],
             'Twk1Email'     => [ $this->{new_user_email} ],
@@ -949,7 +1002,7 @@ sub verify_duplicateActivation {
     # For verification process everything including finish(), so don't just
     # call verifyEmails
     my $code = shift || $debugVerificationCode;
-    $query = new Unit::Request(
+    $query = Unit::Request->new(
         {
             'code'   => [$code],
             'action' => ['verify'],
@@ -982,7 +1035,7 @@ sub verify_duplicateActivation {
 
     # and now for something completely different: Do it all over again
     @FoswikiFnTestCase::mails = ();
-    $query                    = new Unit::Request(
+    $query                    = Unit::Request->new(
         {
             'code'   => [$code],
             'action' => ['verify'],
@@ -1015,6 +1068,8 @@ sub verify_duplicateActivation {
         $this->assert( 0, "expected an oops redirect" );
     };
     @FoswikiFnTestCase::mails = ();
+
+    return;
 }
 
 ################################################################################
@@ -1040,7 +1095,7 @@ sub verify_resetPasswordOkay {
     my @emails = $this->{session}->{users}->getEmails($cUID);
     $this->assert_str_equals( $this->{new_user_email}, $emails[0] );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'LoginName' => [ $this->{new_user_login} ],
             'TopicName' => ['ResetPassword'],
@@ -1085,6 +1140,7 @@ sub verify_resetPasswordOkay {
     my @post_emails = $this->{session}->{users}->getEmails($cUID);
     $this->assert_str_equals( $this->{new_user_email}, $post_emails[0] );
 
+    return;
 }
 
 sub verify_resetPasswordNoSuchUser {
@@ -1092,7 +1148,7 @@ sub verify_resetPasswordNoSuchUser {
 
     # This time we don't set up the testWikiName, so it should fail.
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'LoginName' => [ $this->{new_user_wikiname} ],
             'TopicName' => ['ResetPassword'],
@@ -1125,6 +1181,8 @@ sub verify_resetPasswordNoSuchUser {
         $this->assert( 0, "expected an oops redirect" );
     };
     $this->assert_equals( 0, scalar(@FoswikiFnTestCase::mails) );
+
+    return;
 }
 
 sub verify_resetPasswordNeedPrivilegeForMultipleReset {
@@ -1132,7 +1190,7 @@ sub verify_resetPasswordNeedPrivilegeForMultipleReset {
 
     # This time we don't set up the testWikiName, so it should fail.
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'LoginName' =>
               [ $this->{test_user_wikiname}, $this->{new_user_wikiname} ],
@@ -1167,6 +1225,8 @@ sub verify_resetPasswordNeedPrivilegeForMultipleReset {
         $this->assert( 0, "expected an oops redirect" );
     };
     $this->assert_equals( 0, scalar(@FoswikiFnTestCase::mails) );
+
+    return;
 }
 
 # This test make sure that the system can't reset passwords
@@ -1176,7 +1236,7 @@ sub verify_resetPasswordNoPassword {
 
     $this->registerAccount();
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'LoginName' => [ $this->{new_user_wikiname} ],
             'TopicName' => ['ResetPassword'],
@@ -1214,6 +1274,8 @@ sub verify_resetPasswordNoPassword {
     # If the user is not in htpasswd, there's can't be an email
     $this->assert_equals( 0, scalar(@FoswikiFnTestCase::mails) );
     @FoswikiFnTestCase::mails = ();
+
+    return;
 }
 
 =pod
@@ -1233,9 +1295,9 @@ sub verify_UnregisteredUser {
     };
 
     my $file = Foswiki::UI::Register::_codeFile( $regSave->{VerificationCode} );
-    $this->assert( open( F, ">$file" ) );
-    print F Data::Dumper->Dump( [ $regSave, undef ], [ 'data', 'form' ] );
-    close F;
+    $this->assert( open( my $F, '>', $file ) );
+    print $F Data::Dumper->Dump( [ $regSave, undef ], [ 'data', 'form' ] );
+    $this->assert( close $F );
 
     my $result2 =
       Foswiki::UI::Register::_loadPendingRegistration( $this->{session},
@@ -1258,6 +1320,8 @@ sub verify_UnregisteredUser {
 
     # $this->assert_null( UnregisteredUser::reloadUserContext($code));
     $this->assert_equals( 0, scalar(@FoswikiFnTestCase::mails) );
+
+    return;
 }
 
 sub verify_missingElements {
@@ -1271,6 +1335,8 @@ sub verify_missingElements {
     $this->assert_deep_equals(
         [ Foswiki::UI::Register::_missingElements( \@present, \@present ) ],
         [] );
+
+    return;
 }
 
 sub verify_buildRegistrationEmail {
@@ -1354,6 +1420,8 @@ s/$this->{new_user_fullname} - $this->{new_user_wikiname} - $this->{new_user_ema
         $actual );
 
     $this->assert_equals( 0, scalar(@FoswikiFnTestCase::mails) );
+
+    return;
 }
 
 =pod
@@ -1363,19 +1431,22 @@ s/$this->{new_user_fullname} - $this->{new_user_wikiname} - $this->{new_user_ema
 =cut
 
 sub visible {
-    return $_[0];
     my ($a) = @_;
-    $a =~ s/\n/NL/g;
-    $a =~ s/\r/CR/g;
-    $a =~ s/ /SP/g;
-    $a;
+    return $a;
+
+    # PH commented this dead code Item11431
+    #$a =~ s/\n/NL/g;
+    #$a =~ s/\r/CR/g;
+    #$a =~ s/ /SP/g;
+    #
+    #return $a;
 }
 
 sub verify_disabled_registration {
     my $this = shift;
     $Foswiki::cfg{Register}{EnableNewUserRegistration} = 0;
     $Foswiki::cfg{Register}{NeedVerification}          = 0;
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'     => ['UserRegistration'],
             'Twk1Email'     => [ $this->{new_user_email} ],
@@ -1418,6 +1489,8 @@ sub verify_disabled_registration {
               . $e->{def} . '} '
               . ref($e) );
     }
+
+    return;
 }
 
 # "All I want to do for this installation is register with my wiki name
@@ -1434,7 +1507,7 @@ sub test_3951 {
     $Foswiki::cfg{Register}{EnableNewUserRegistration} = 1;
     $Foswiki::cfg{LoginManager}    = 'Foswiki::LoginManager::TemplateLogin';
     $Foswiki::cfg{PasswordManager} = 'Foswiki::Users::HtPasswdUser';
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'     => ['UserRegistration'],
             'Twk1Email'     => [ $this->{new_user_email} ],
@@ -1479,6 +1552,8 @@ sub test_3951 {
     otherwise {
         $this->assert( 0, "expected an oops redirect" );
     };
+
+    return;
 }
 
 # "User gets added to password system, despite a failure adding
@@ -1490,7 +1565,7 @@ sub test_4061 {
     $Foswiki::cfg{Register}{EnableNewUserRegistration} = 1;
     $Foswiki::cfg{LoginManager}    = 'Foswiki::LoginManager::TemplateLogin';
     $Foswiki::cfg{PasswordManager} = 'Foswiki::Users::HtPasswdUser';
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'     => ['UserRegistration'],
             'Twk1Email'     => [ $this->{new_user_email} ],
@@ -1515,10 +1590,10 @@ sub test_4061 {
     $this->assert( open( my $fh, "<", $Foswiki::cfg{Htpasswd}{FileName} ) );
     my ( $before, $stuff );
     {
-        local $/;
+        local $/ = undef;
         $before = <$fh>;
     }
-    close($fh);
+    $this->assert( close($fh) );
     try {
         no strict 'refs';
         $this->captureWithKey( register => $REG_UI_FN, $this->{session} );
@@ -1534,10 +1609,10 @@ sub test_4061 {
         # Verify that they have not been added to .htpasswd
         $this->assert( open( $fh, "<", $Foswiki::cfg{Htpasswd}{FileName} ) );
         {
-            local $/;
+            local $/ = undef;
             $stuff = <$fh>;
         }
-        close($fh);
+        $this->assert( close($fh) );
         $this->assert_str_equals( $before, $stuff );
 
         # Verify they have no user topic
@@ -1563,6 +1638,8 @@ sub test_4061 {
 "$Foswiki::cfg{DataDir}/$this->{users_web}/$Foswiki::cfg{UsersTopicName}.txt"
         );
     };
+
+    return;
 }
 
 ################################################################################
@@ -1613,7 +1690,7 @@ sub verify_resetPassword_NoWikiUsersEntry {
     my @emails = $this->{session}->{users}->getEmails($cUID);
     $this->assert_str_equals( $this->{new_user_email}, $emails[0] );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'LoginName' => [ $this->{new_user_login} ],
             'TopicName' => ['ResetPassword'],
@@ -1658,12 +1735,13 @@ sub verify_resetPassword_NoWikiUsersEntry {
     my @post_emails = $this->{session}->{users}->getEmails($cUID);
     $this->assert_str_equals( $this->{new_user_email}, $post_emails[0] );
 
+    return;
 }
 
 sub registerUserException {
     my ( $this, $loginname, $forename, $surname, $email ) = @_;
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             'TopicName'     => ['UserRegistration'],
             'Twk1Email'     => [$email],
@@ -1772,6 +1850,7 @@ sub verify_Default_LoginNameFilterIn {
         "question logon should fail"
     );
 
+    return;
 }
 
 sub verify_Modified_LoginNameFilterIn_At {
@@ -1816,6 +1895,8 @@ sub verify_Modified_LoginNameFilterIn_At {
     );
 
     $Foswiki::cfg{LoginNameFilterIn} = $oldCfg;
+
+    return;
 }
 
 sub verify_Modified_LoginNameFilterIn_Liberal {
@@ -1846,6 +1927,8 @@ sub verify_Modified_LoginNameFilterIn_Liberal {
     $this->assert_null( $ret, "question?logon should succed" );
 
     $Foswiki::cfg{LoginNameFilterIn} = $oldCfg;
+
+    return;
 }
 
 #$Foswiki::cfg{NameFilter} = qr/[\s\*?~^\$@%`"'&;|<>\[\]\x00-\x1f]/;
@@ -1910,6 +1993,7 @@ sub verify_Default_NameFilter {
         "question logon should fail"
     );
 
+    return;
 }
 
 1;
