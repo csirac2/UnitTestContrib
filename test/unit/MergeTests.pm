@@ -23,14 +23,6 @@ sub new {
 
 use vars qw( $info @mudge );
 
-sub set_up {
-    my $this = shift;
-
-    $this->SUPER::set_up();
-
-    @mudge = ();
-}
-
 #-----------------------------------------------------------------------------
 # helper methods
 
@@ -51,22 +43,32 @@ sub set_up {
         push( @MergeTests::mudge, "$c#$a#$b" );
         return undef;
     }
+
+    sub finish {
+    }
 }
 
-my $session = new Foswiki();
-$session->{plugins} = new HackJob();
-$info = { argle => "bargle" };
+sub set_up {
+    my $this = shift;
+
+    $this->SUPER::set_up();
+    $this->createNewFoswikiSession();
+    @mudge                    = ();
+    $this->{session}{plugins} = new HackJob();
+    $info                     = { argle => "bargle" };
+}
 
 sub _merge3 {
     my ( $ia, $ib, $ic ) = @_;
-    return Foswiki::Merge::merge3( 'a', $ia, 'b', $ib, 'c', $ic, ' ', $session,
-        $info );
+    return Foswiki::Merge::merge3( 'a', $ia, 'b', $ib, 'c', $ic, ' ',
+        $Foswiki::Plugins::SESSION, $info );
 }
 
 sub _merge2 {
     my ( $ia, $ib ) = @_;
 
-    return Foswiki::Merge::merge2( 'a', $ia, 'b', $ib, ' ', $session, $info );
+    return Foswiki::Merge::merge2( 'a', $ia, 'b', $ib, ' ',
+        $Foswiki::Plugins::SESSION, $info );
 }
 
 sub _readfile {
@@ -217,8 +219,8 @@ New text in version "b".<br>
 Very nice.<br>
 EOF
 
-    $d = Foswiki::Merge::merge3( "r1", $a, "r2", $b, "r3", $c, '\n', $session,
-        $info );
+    $d = Foswiki::Merge::merge3( "r1", $a, "r2", $b, "r3", $c, '\n',
+        $Foswiki::Plugins::SESSION, $info );
     $this->assert_str_equals( $e, $d );
 
     $c = <<"EOF";
@@ -239,8 +241,8 @@ Alternatively, new text in version "c".<br>
 Very nice.<br>
 EOF
 
-    $d = Foswiki::Merge::merge3( "r1", $a, "r2", $b, "r3", $c, '\n', $session,
-        $info );
+    $d = Foswiki::Merge::merge3( "r1", $a, "r2", $b, "r3", $c, '\n',
+        $Foswiki::Plugins::SESSION, $info );
     $this->assert_str_equals( $e, $d );
 }
 
