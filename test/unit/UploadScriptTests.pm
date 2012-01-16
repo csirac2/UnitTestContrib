@@ -72,8 +72,7 @@ sub do_upload {
     $this->assert($stream);
     seek( $stream, 0, 0 );
 
-    $this->{session}->finish();
-    $this->{session} = Foswiki->new( $cuid, $query );
+    $this->createNewFoswikiSession( $cuid, $query );
 
     my ($text) = $this->captureWithKey(
         'upload',
@@ -185,9 +184,7 @@ sub test_oversized_upload {
     );
     my $query = Unit::Request->new( \%args );
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
-    $this->{session}->finish();
-    $this->{session} = Foswiki->new( $this->{test_user_login}, $query );
-    $Foswiki::Plugins::SESSION = $this->{session};
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my $data = '00000000000000000000000000000000000000';
     my $sz   = Foswiki::Func::getPreferencesValue('ATTACHFILESIZELIMIT') * 1024;
     $data .= $data while length($data) <= $sz;
