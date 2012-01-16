@@ -1,10 +1,10 @@
-use strict;
-
 #
 # Unit tests for Foswiki::Templates
 #
 
 package TemplatesTests;
+use strict;
+use warnings;
 
 use FoswikiTestCase;
 our @ISA = qw( FoswikiTestCase );
@@ -25,7 +25,6 @@ sub new {
 my $test_tmpls;
 my $test_data;
 
-my $session;
 my $tmpls;
 
 sub set_up {
@@ -43,8 +42,8 @@ sub set_up {
     File::Path::mkpath($test_tmpls);
     File::Path::mkpath($test_data);
 
-    $session = new Foswiki();
-    $tmpls   = $session->templates;
+    $this->createNewFoswikiSession();
+    $tmpls = $this->{session}->templates;
 
     $Foswiki::cfg{TemplateDir} = $test_tmpls;
     $Foswiki::cfg{DataDir}     = $test_data;
@@ -59,7 +58,6 @@ sub set_up {
 
 sub tear_down {
     my $this = shift;
-    $session->finish();
     $this->SUPER::tear_down();
     rmtree( $this->{tempdir} );    # Cleanup any old tests
 }
