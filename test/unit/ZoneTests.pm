@@ -3,16 +3,8 @@ package ZoneTests;
 use strict;
 use warnings;
 
-use FoswikiTestCase;
-our @ISA = qw( FoswikiTestCase );
-
-sub new {
-    my $class = shift;
-    my $this  = $class->SUPER::new(@_);
-    $this->{test_web}   = 'Temporary' . $class . 'TestWeb';
-    $this->{test_topic} = 'TestTopic' . $class;
-    return $this;
-}
+use FoswikiFnTestCase;
+our @ISA = qw( FoswikiFnTestCase );
 
 sub set_up {
     my ($this) = @_;
@@ -27,14 +19,7 @@ sub set_up {
     my $query = new Unit::Request("");
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
 
-    $this->{session}  = new Foswiki( undef, $query );
-    $this->{request}  = $query;
-    $this->{response} = new Unit::Response();
-
-    $this->{test_topicObject} = Foswiki::Meta->new(
-        $this->{session},    $this->{test_web},
-        $this->{test_topic}, "BLEEGLE\n"
-    );
+    $this->createNewFoswikiSession( undef, $query );
 }
 
 sub test_1 {
