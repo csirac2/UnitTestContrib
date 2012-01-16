@@ -21,15 +21,15 @@ our %expected_status_main_webhome = (
 # TODO: this is beause we're calling the UI::function, not UI:Execute - need to
 # re-write it to use the full engine
 our %expect_non_html = (
-    rest        => 1,
-    restauth        => 1,
-    viewfile    => 1,
+    rest         => 1,
+    restauth     => 1,
+    viewfile     => 1,
     viewfileauth => 1,
-    register    => 1,    # TODO: missing action make it throw an exception
-    manage      => 1,    # TODO: missing action make it throw an exception
-    upload      => 1,    # TODO: zero size upload
-    resetpasswd => 1,
-    statistics  => 1,
+    register     => 1,    # TODO: missing action make it throw an exception
+    manage       => 1,    # TODO: missing action make it throw an exception
+    upload       => 1,    # TODO: zero size upload
+    resetpasswd  => 1,
+    statistics   => 1,
 );
 
 sub new {
@@ -66,8 +66,8 @@ sub fixture_groups {
                 context  => $array[2],
             };
         }
-        
-        next unless (ref($dispatcher) eq 'HASH');#bad switchboard entry.
+
+        next unless ( ref($dispatcher) eq 'HASH' );    #bad switchboard entry.
 
         my $package = $dispatcher->{package} || 'Foswiki::UI';
         eval "require $package" or next;
@@ -97,17 +97,17 @@ sub call_UI_FN {
     );
     $query->path_info("/$web/$topic");
     $query->method('POST');
-    my $fatwilly = Foswiki->new( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my ( $responseText, $result, $stdout, $stderr );
     $responseText = "Status: 500";    #errr, boom
     try {
         ( $responseText, $result, $stdout, $stderr ) = $this->captureWithKey(
             switchboard => sub {
                 no strict 'refs';
-                &${UI_FN}($fatwilly);
+                &${UI_FN}( $this->{session} );
                 use strict 'refs';
-                $Foswiki::engine->finalize( $fatwilly->{response},
-                    $fatwilly->{request} );
+                $Foswiki::engine->finalize( $this->{session}{response},
+                    $this->{session}{request} );
             }
         );
     }
@@ -119,7 +119,6 @@ sub call_UI_FN {
         my $e = shift;
         $responseText = $e->stringify();
     };
-    $fatwilly->finish();
 
     $this->assert($responseText);
 
