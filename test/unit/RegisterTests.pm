@@ -1,6 +1,9 @@
 #require 5.008;
 
 package RegisterTests;
+use strict;
+use warnings;
+use diagnostics;
 
 # Tests not implemented:
 #notest_registerTwiceWikiName
@@ -18,8 +21,6 @@ package RegisterTests;
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
-use diagnostics;
 use Foswiki::UI::Register;
 use Data::Dumper;
 use FileHandle;
@@ -38,7 +39,6 @@ sub new {
     return $this;
 }
 
-my $session;
 my $REG_UI_FN;
 my $RP_UI_FN;
 
@@ -251,9 +251,7 @@ sub fixture_groups {
 sub set_up_for_verify {
     my $this = shift;
 
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
-    $Foswiki::Plugins::SESSION = $this->{session};
+    $this->createNewFoswikiSession();
 
     @FoswikiFntestCase::mails = ();
 }
@@ -520,8 +518,7 @@ sub registerVerifyOk {
     );
 
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -561,8 +558,7 @@ sub registerVerifyOk {
         }
     );
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -626,8 +622,7 @@ sub _registerBadVerify {
         }
     );
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     try {
         no strict 'refs';
@@ -666,8 +661,7 @@ sub _registerBadVerify {
         }
     );
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -737,8 +731,7 @@ sub _registerNoVerifyOk {
     );
 
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -809,8 +802,7 @@ sub verify_rejectShortPassword {
     );
 
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -861,8 +853,7 @@ sub verify_shortPassword {
     );
 
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -921,7 +912,7 @@ sub verify_duplicateActivation {
         }
     );
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session} = Foswiki->new( $Foswiki::cfg{DefaultUserName}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserName}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     try {
         no strict 'refs';
@@ -954,7 +945,6 @@ sub verify_duplicateActivation {
 
     # Read the verification code before finish()'ing the session
     my $debugVerificationCode = $this->{session}->{DebugVerificationCode};
-    $this->{session}->finish();
 
     # For verification process everything including finish(), so don't just
     # call verifyEmails
@@ -966,7 +956,7 @@ sub verify_duplicateActivation {
         }
     );
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session} = Foswiki->new( $Foswiki::cfg{DefaultUserName}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserName}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     try {
         no strict 'refs';
@@ -989,7 +979,6 @@ sub verify_duplicateActivation {
     otherwise {
         $this->assert( 0, "expected an oops redirect" );
     };
-    $this->{session}->finish();
 
     # and now for something completely different: Do it all over again
     @FoswikiFnTestCase::mails = ();
@@ -1000,7 +989,7 @@ sub verify_duplicateActivation {
         }
     );
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session} = Foswiki->new( $Foswiki::cfg{DefaultUserName}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserName}, $query );
     $this->{session}->net->setMailHandler( \&sentMail );
     try {
         no strict 'refs';
@@ -1060,8 +1049,7 @@ sub verify_resetPasswordOkay {
     );
 
     $query->path_info( '/' . $this->{users_web} . '/WebHome' );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -1113,8 +1101,7 @@ sub verify_resetPasswordNoSuchUser {
     );
 
     $query->path_info( '/.' . $this->{users_web} . '/WebHome' );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -1155,8 +1142,7 @@ sub verify_resetPasswordNeedPrivilegeForMultipleReset {
     );
 
     $query->path_info( '/.' . $this->{users_web} . '/WebHome' );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -1201,8 +1187,7 @@ sub verify_resetPasswordNoPassword {
     $query->path_info( '/' . $this->{users_web} . '/WebHome' );
     unlink $Foswiki::cfg{Htpasswd}{FileName};
 
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -1253,7 +1238,8 @@ sub verify_UnregisteredUser {
     close F;
 
     my $result2 =
-      Foswiki::UI::Register::_loadPendingRegistration( $session, "GitWit.0" );
+      Foswiki::UI::Register::_loadPendingRegistration( $this->{session},
+        "GitWit.0" );
     $this->assert_deep_equals( $result2, $regSave );
 
     try {
@@ -1343,8 +1329,7 @@ sub verify_buildRegistrationEmail {
         'Confirm'          => 'mypassword'
     );
 
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin} );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin} );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     my $actual =
@@ -1405,8 +1390,7 @@ sub verify_disabled_registration {
     );
 
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -1464,8 +1448,7 @@ sub test_3951 {
     );
 
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -1526,8 +1509,7 @@ sub test_4061 {
     );
 
     $query->path_info("/$this->{users_web}/UserRegistration");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     $this->assert( open( my $fh, "<", $Foswiki::cfg{Htpasswd}{FileName} ) );
@@ -1609,9 +1591,7 @@ sub verify_resetPassword_NoWikiUsersEntry {
     $from->move($to);
 
     #force a reload to unload existing user caches, and then restart as guest
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
-    $Foswiki::Plugins::SESSION = $this->{session};
+    $this->createNewFoswikiSession();
 
     $this->assert(
         !Foswiki::Func::topicExists(
@@ -1642,8 +1622,7 @@ sub verify_resetPassword_NoWikiUsersEntry {
     );
 
     $query->path_info( '/' . $this->{users_web} . '/WebHome' );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{DefaultUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{DefaultUserLogin}, $query );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     try {
@@ -1700,12 +1679,12 @@ sub registerUserException {
 
     $query->path_info("/$this->{users_web}/UserRegistration");
 
-    my $fatwilly = new Foswiki( undef, $query );
-    $fatwilly->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
+    $this->createNewFoswikiSession( undef, $query );
+    $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
     my $exception;
     try {
         no strict 'refs';
-        $this->captureWithKey( register => $REG_UI_FN, $fatwilly );
+        $this->captureWithKey( register => $REG_UI_FN, $this->{session} );
         no strict 'refs';
     }
     catch Foswiki::OopsException with {
@@ -1729,12 +1708,10 @@ sub registerUserException {
         $exception = new Error::Simple();
         $exception->{template} = "OK";
     };
-    $fatwilly->finish();
 
     # Reload caches
     my $q = $this->{request};
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( undef, $q );
+    $this->createNewFoswikiSession( undef, $q );
     $this->{session}->net->setMailHandler( \&FoswikiFnTestCase::sentMail );
 
     return $exception;
