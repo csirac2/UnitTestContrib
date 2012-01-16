@@ -1,10 +1,10 @@
-use strict;
-
 package SaveScriptTests;
+use strict;
+use warnings;
+
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
 use Foswiki;
 use Foswiki::UI::Save;
 use Error qw( :try );
@@ -120,7 +120,6 @@ sub set_up {
 CONTENT
     $topicObject->save();
 
-    $Foswiki::Plugins::SESSION = $this->{session};
 }
 
 # AUTOINC
@@ -133,9 +132,8 @@ sub test_AUTOINC {
         }
     );
     $query->path_info( '/' . $this->{test_web} . '.TestAutoAUTOINC00' );
-    $this->{session}->finish();
     $query->method('post');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my %old;
     foreach my $t ( Foswiki::Func::getTopicList( $this->{test_web} ) ) {
         $old{$t} = 1;
@@ -151,9 +149,8 @@ sub test_AUTOINC {
         }
     }
     $this->assert($seen);
-    $this->{session}->finish();
     $query->method('pOsT');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $seen = 0;
     foreach my $t ( Foswiki::Func::getTopicList( $this->{test_web} ) ) {
@@ -178,8 +175,7 @@ sub test_XXXXXXXXXX {
         }
     );
     $query->path_info( '/' . $this->{test_web} . '.TestTopicXXXXXXXXXX' );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my %old;
     foreach my $t ( Foswiki::Func::getTopicList( $this->{test_web} ) ) {
         $old{$t} = 1;
@@ -195,8 +191,7 @@ sub test_XXXXXXXXXX {
         }
     }
     $this->assert($seen);
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $seen = 0;
     foreach my $t ( Foswiki::Func::getTopicList( $this->{test_web} ) ) {
@@ -222,8 +217,7 @@ sub test_XXXXXXXXX {
     $query->path_info("/$this->{test_web}/TestTopicXXXXXXXXX");
     $this->assert(
         !$this->{session}->topicExists( $this->{test_web}, 'TestTopic0' ) );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my %old;
     foreach my $t ( Foswiki::Func::getTopicList( $this->{test_web} ) ) {
         $old{$t} = 1;
@@ -253,8 +247,7 @@ sub test_XXXXXXXXXXX {
         }
     );
     $query->path_info("/$this->{test_web}/TestTopicXXXXXXXXXXX");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my %old;
     foreach my $t ( Foswiki::Func::getTopicList( $this->{test_web} ) ) {
         $old{$t} = 1;
@@ -280,8 +273,7 @@ sub test_emptySave {
             topic  => [ $this->{test_web} . '.EmptyTestSaveScriptTopic' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     my $meta =
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
@@ -300,8 +292,7 @@ sub test_simpleTextSave {
             topic  => [ $this->{test_web} . '.DeleteTestSaveScriptTopic' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     my $meta =
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
@@ -320,8 +311,7 @@ sub test_simpleTextSaveDeniedWebCHANGE {
             topic  => [ $this->{test_web} . '.DeleteTestSaveScriptTopic3' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_3_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_3_login}, $query );
 
     my $exception;
     try {
@@ -364,8 +354,7 @@ sub test_templateTopicTextSave {
             topic  => [ $this->{test_web} . '.TemplateTopic' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $query = new Unit::Request(
         {
@@ -374,8 +363,7 @@ sub test_templateTopicTextSave {
             topic         => [ $this->{test_web} . '.TemplateTopic' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     my $meta =
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
@@ -395,8 +383,7 @@ sub test_prevTopicTextSave {
             topic  => [ $this->{test_web} . '.PrevTopicTextSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $query = new Unit::Request(
         {
@@ -405,8 +392,7 @@ sub test_prevTopicTextSave {
             topic  => [ $this->{test_web} . '.PrevTopicTextSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     my $meta =
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
@@ -426,8 +412,7 @@ sub test_missingWebSave {
             topic  => [ 'MissingWeb' . '.PrevTopicTextSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     try {
         $this->captureWithKey( save => $UI_FN, $this->{session} );
         $this->assert( 0, 'save into missing web worked' );
@@ -451,8 +436,7 @@ sub test_prevTopicEmptyTextSave {
             topic  => [ $this->{test_web} . '.PrevTopicEmptyTextSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $query = new Unit::Request(
         {
@@ -460,8 +444,7 @@ sub test_prevTopicEmptyTextSave {
             topic  => [ $this->{test_web} . '.PrevTopicEmptyTextSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     my $meta =
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
@@ -482,8 +465,7 @@ sub test_simpleFormSave {
             topic        => [ $this->{test_web} . '.SimpleFormSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $this->assert(
         $this->{session}->topicExists( $this->{test_web}, 'SimpleFormSave' ) );
@@ -511,8 +493,7 @@ sub test_templateTopicFormSave {
             topic        => [ $this->{test_web} . '.TemplateTopic' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
 
     my $xmeta =
@@ -526,8 +507,7 @@ sub test_templateTopicFormSave {
             topic         => [ $this->{test_web} . '.TemplateTopicAgain' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     my $meta =
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
@@ -554,8 +534,7 @@ sub test_prevTopicFormSave {
             topic        => [ $this->{test_web} . '.PrevTopicFormSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $query = new Unit::Request(
         {
@@ -564,8 +543,7 @@ sub test_prevTopicFormSave {
             topic       => [ $this->{test_web} . '.PrevTopicFormSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     my $meta =
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
@@ -594,8 +572,7 @@ sub test_simpleFormSave1 {
             topic                => [ $this->{test_web} . '.SimpleFormTopic' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $this->assert(
         $this->{session}->topicExists( $this->{test_web}, 'SimpleFormTopic' ) );
@@ -613,8 +590,7 @@ sub test_simpleFormSave1 {
 # are deleted.
 sub test_simpleFormSave2 {
     my $this = shift;
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
 
     my $oldmeta =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
@@ -640,8 +616,7 @@ sub test_simpleFormSave2 {
             topic                => [ $this->{test_web} . '.SimpleFormSave2' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $this->assert(
         $this->{session}->topicExists( $this->{test_web}, 'SimpleFormSave2' ) );
@@ -659,8 +634,7 @@ sub test_simpleFormSave2 {
 # during saves.
 sub test_simpleFormSave3 {
     my $this = shift;
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
 
     my $oldmeta =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
@@ -686,8 +660,7 @@ sub test_simpleFormSave3 {
             topic                => [ $this->{test_web} . '.SimpleFormSave3' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $this->assert(
         $this->{session}->topicExists( $this->{test_web}, 'SimpleFormSave3' ) );
@@ -715,8 +688,7 @@ sub test_simpleFormSaveZeroValue {
             topic        => [ $this->{test_web} . '.SimpleFormSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $this->assert(
         $this->{session}->topicExists( $this->{test_web}, 'SimpleFormSave' ) );
@@ -744,8 +716,7 @@ sub test_simpleFormSaveEmptyValue {
             topic        => [ $this->{test_web} . '.SimpleFormSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $this->assert(
         $this->{session}->topicExists( $this->{test_web}, 'SimpleFormSave' ) );
@@ -773,8 +744,7 @@ sub test_templateTopicWithMeta {
             topic         => [ $this->{test_web} . '.TemplateTopicWithMeta' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     my $meta =
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
@@ -828,8 +798,7 @@ sub test_templateTopicWithAttachments {
             topic         => ["$this->{test_web}.$testTopic"]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
 
     my ( $meta, $text ) =
@@ -854,8 +823,7 @@ sub test_templateTopicWithAttachments {
 
 sub test_merge {
     my $this = shift;
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
 
     # Set up the original topic that the two edits started on
     my $oldmeta =
@@ -898,8 +866,7 @@ GUMP
     );
 
     # Do the save
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query1 );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query1 );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
     $info = $meta->getRevisionInfo();
 
@@ -928,8 +895,7 @@ GUMP
     );
 
     # Do the save. This time we expect a merge exception
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_2_login}, $query2 );
+    $this->createNewFoswikiSession( $this->{test_user_2_login}, $query2 );
     try {
         $this->captureWithKey( save => $UI_FN, $this->{session} );
     }
@@ -987,8 +953,7 @@ ZIS
 #        action => [ 'save' ],
 #        topic => [ $this->{test_web}.'.DeleteTestRestoreRevisionTopic' ]
 #       });
-#    $this->{session}->finish();
-#    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+#    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
 #    $this->captureWithKey( save => &$UI_FN, $this->{session});
 #
 #    # retrieve revision number
@@ -1013,8 +978,7 @@ ZIS
 #                         'Textfield' => [ 'Test' ],
 #			 topic  => [ $this->{test_web}.'.DeleteTestRestoreRevisionTopic' ]
 #                        });
-#    $this->{session}->finish();
-#    $this->{session} = new Foswiki( $this->{test_user_login}, $query);
+#    $this->createNewFoswikiSession( $this->{test_user_login}, $query);
 #    $this->captureWithKey( save => $UI_FN, $this->{session});
 #
 #    $meta = Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'DeleteTestRestoreRevisionTopic');
@@ -1031,8 +995,7 @@ ZIS
 #        forcenewrevision => 1,
 #        topic => [ $this->{test_web}.'.DeleteTestRestoreRevisionTopic' ]
 #       });
-#    $this->{session}->finish();
-#    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+#    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
 #    $this->captureWithKey( save => $UI_FN, $this->{session});
 #    $meta = Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'DeleteTestRestoreRevisionTopic');
 #    $text = $meta->text;
@@ -1050,8 +1013,7 @@ ZIS
 #        forcenewrevision => 1,
 #        topic => [ $this->{test_web}.'.DeleteTestRestoreRevisionTopic' ]
 #       });
-#    $this->{session}->finish();
-#    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+#    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
 #    $this->captureWithKey( save => $UI_FN, $this->{session});
 #    $meta = Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'DeleteTestRestoreRevisionTopic');
 #    $text = $meta->text;
@@ -1080,8 +1042,7 @@ sub test_1897 {
     # make sure we have time to complete the test
     $Foswiki::cfg{ReplaceIfEditedAgainWithin} = 7200;
 
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login} );
+    $this->createNewFoswikiSession( $this->{test_user_login} );
 
     my $oldmeta =
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'MergeSave' );
@@ -1116,8 +1077,7 @@ sub test_1897 {
             topic       => [ $this->{test_web} . '.MergeSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->captureWithKey( save => $UI_FN, $this->{session} );
 
     # make sure it's still rev 1 as expected
@@ -1140,8 +1100,7 @@ sub test_1897 {
             topic       => [ $this->{test_web} . '.MergeSave' ]
         }
     );
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_2_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_2_login}, $query );
     try {
         $this->captureWithKey( save => $UI_FN, $this->{session} );
     }
@@ -1168,8 +1127,7 @@ sub test_1897 {
 }
 
 sub test_missingTemplateTopic {
-    my $this = shift;
-    $this->{session}->finish();
+    my $this  = shift;
     my $query = new Unit::Request(
         {
             templatetopic => ['NonExistantTemplateTopic'],
@@ -1178,7 +1136,7 @@ sub test_missingTemplateTopic {
         }
     );
     $query->method('post');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     try {
         $this->captureWithKey( save => $UI_FN, $this->{session} );
     }
@@ -1192,8 +1150,7 @@ sub test_missingTemplateTopic {
 }
 
 sub test_addform {
-    my $this = shift;
-    $this->{session}->finish();
+    my $this  = shift;
     my $query = new Unit::Request(
         {
             action => ['addform'],
@@ -1201,7 +1158,7 @@ sub test_addform {
         }
     );
     $query->method('POST');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     try {
         my ($text) = $this->captureWithKey( save => $UI_FN, $this->{session} );
         $this->assert_matches( qr/input value="TestForm1" name="formtemplate"/,
@@ -1221,7 +1178,6 @@ sub test_addform {
 sub test_get {
     my $this = shift;
 
-    $this->{session}->finish();
     my $query = new Unit::Request(
         {
             action => ['save'],
@@ -1229,7 +1185,7 @@ sub test_get {
         }
     );
     $query->method('GET');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
 
     try {
         my ($text) = $this->captureWithKey( save => $UI_FN, $this->{session} );
