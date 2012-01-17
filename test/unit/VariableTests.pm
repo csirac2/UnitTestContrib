@@ -16,17 +16,20 @@ sub set_up {
 
     $this->SUPER::set_up();
 
-    my $query = new Unit::Request("");
+    my $query = Unit::Request->new("");
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
     $this->createNewFoswikiSession( 'scum', $query );
     $this->{test_topicObject} =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
         $this->{test_topic} );
+
+    return;
 }
 
 sub new {
-    my $self = shift()->SUPER::new( 'Variables', @_ );
-    return $self;
+    my ( $class, @args ) = @_;
+
+    return $class->SUPER::new( 'Variables', @args );
 }
 
 sub test_embeddedExpansions {
@@ -64,6 +67,7 @@ sub test_embeddedExpansions {
     $result = $this->{test_topicObject}->expandMacros("%%%PA%%%%SB{}%%%");
     $this->assert_equals( 'Egg sample', $result );
 
+    return;
 }
 
 sub test_topicCreationExpansions {
@@ -88,7 +92,7 @@ END
       ->put( 'PREFERENCE', { name => "BLAH", value => "%WIKINAME%" } );
     $this->{test_topicObject}->expandNewTopic();
 
-    my $xpect = <<END;
+    my $xpect = <<"END";
 scum
 
 ScumBag
@@ -103,6 +107,8 @@ END
     $this->assert_str_equals( $xpect, $this->{test_topicObject}->text() );
     $this->assert_str_equals( "ScumBag",
         $this->{test_topicObject}->get( 'PREFERENCE', 'BLAH' )->{value} );
+
+    return;
 }
 
 sub test_userExpansions {
@@ -118,7 +124,7 @@ sub test_userExpansions {
 %USERINFO{"WikiGuest" format="$cUID,$emails,$username,$wikiname,$wikiusername"}%
 END
     my $result = $this->{test_topicObject}->expandMacros($text);
-    my $xpect  = <<END;
+    my $xpect  = <<"END";
 scum
 ScumBag
 $this->{users_web}.ScumBag
@@ -129,6 +135,8 @@ END
     $this->annotate( "Foswiki::cfg{Register}{AllowLoginName} == "
           . $Foswiki::cfg{Register}{AllowLoginName} );
     $this->assert_str_equals( $xpect, $result );
+
+    return;
 }
 
 sub test_macroParams {
@@ -171,6 +179,7 @@ INPUT
 EXPECTED
     $this->assert_str_equals( $expected, $result );
 
+    return;
 }
 
 1;
