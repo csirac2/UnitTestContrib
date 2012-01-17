@@ -3,17 +3,18 @@
 package Fn_REVINFO;
 use strict;
 use warnings;
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
+use Foswiki();
+use Foswiki::Time();
 use Error qw( :try );
-use Foswiki::Time;
 
 sub new {
+    my ( $class, @args ) = @_;
+
     $Foswiki::cfg{Register}{AllowLoginName} = 1;
-    my $self = shift()->SUPER::new( 'REVINFO', @_ );
-    return $self;
+    return $class->SUPER::new( 'REVINFO', @args );
 }
 
 sub set_up {
@@ -21,14 +22,17 @@ sub set_up {
     $this->SUPER::set_up(@_);
     $this->{guest_wikiname} = Foswiki::Func::getWikiName();
     $this->{session}->{user} = $this->{test_user_cuid};    # OUCH
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{users_web}, "GropeGroup",
-        "   * Set GROUP = ScumBag,WikiGuest\n" );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{users_web}, "GropeGroup" );
+    $topicObject->text("   * Set GROUP = ScumBag,WikiGuest\n");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, "GlumDrop",
-        "Burble\n" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, "GlumDrop" );
+    $topicObject->text("Burble\n");
     $topicObject->save();
+    $topicObject->finish();
+
+    return;
 }
 
 sub test_basic {
@@ -41,6 +45,8 @@ sub test_basic {
     {
         $this->assert( 0, $ui );
     }
+
+    return;
 }
 
 sub test_basic2 {
@@ -55,6 +61,8 @@ sub test_basic2 {
     {
         $this->assert( 0, $ui );
     }
+
+    return;
 }
 
 sub test_basic3 {
@@ -69,6 +77,8 @@ sub test_basic3 {
     {
         $this->assert( 0, $ui );
     }
+
+    return;
 }
 
 sub test_thisWebVars {
@@ -84,6 +94,8 @@ sub test_thisWebVars {
     {
         $this->assert( 0, $ui );
     }
+
+    return;
 }
 
 #the following 2 return with reasonable looking non-0, but with WikiGuest as author - perhaps there's a bigger bug out there.
@@ -99,6 +111,8 @@ sub BROKENtest_thisTopicVars {
     {
         $this->assert( 0, $ui );
     }
+
+    return;
 }
 
 sub BROKENtest_thisWebTopicVars {
@@ -114,6 +128,8 @@ sub BROKENtest_thisWebTopicVars {
     {
         $this->assert( 0, $ui );
     }
+
+    return;
 }
 
 sub test_otherWeb {
@@ -131,6 +147,8 @@ sub test_otherWeb {
     {
         $this->assert( 0, $ui );
     }
+
+    return;
 }
 
 sub test_otherWeb2 {
@@ -147,6 +165,8 @@ sub test_otherWeb2 {
     {
         $this->assert( 0, $ui );
     }
+
+    return;
 }
 
 sub test_formatUser {
@@ -160,6 +180,8 @@ sub test_formatUser {
 "$this->{test_user_login} $this->{test_user_wikiname} $this->{users_web}\.$this->{test_user_wikiname}",
         $ui
     );
+
+    return;
 }
 
 sub test_compatibility1 {
@@ -184,6 +206,7 @@ HERE
       $topicObject->expandMacros('%REVINFO{format="$username $wikiname"}%');
     $this->assert_str_equals( "scum ScumBag", $ui );
 
+    return;
 }
 
 sub test_compatibility2 {
@@ -208,6 +231,7 @@ HERE
       $topicObject->expandMacros('%REVINFO{format="$username $wikiname"}%');
     $this->assert_str_equals( "scum ScumBag", $ui );
 
+    return;
 }
 
 sub test_5873 {
@@ -222,13 +246,14 @@ sub test_5873 {
     }
     $this->assert(
         open(
-            F, '>', "$Foswiki::cfg{DataDir}/$this->{test_web}/GeeWillikins.txt"
+            my $F, '>',
+            "$Foswiki::cfg{DataDir}/$this->{test_web}/GeeWillikins.txt"
         )
     );
-    print F <<'HERE';
+    print $F <<'HERE';
 %META:TOPICINFO{author="eltonjohn" date="1120846368" format="1.1" version="$Rev$"}%
 HERE
-    close(F);
+    $this->assert( close($F) );
     $Foswiki::cfg{RenderLoggedInButUnknownUsers} = 0;
     my $topicObject =
       Foswiki::Meta->load( $this->{session}, $this->{test_web},
@@ -240,6 +265,8 @@ HERE
     $ui = $topicObject->expandMacros(
         '%REVINFO{format="$username $wikiname $wikiusername"}%');
     $this->assert_str_equals( "unknown unknown unknown", $ui );
+
+    return;
 }
 
 sub test_42 {
@@ -257,6 +284,8 @@ sub test_42 {
           . '.HappyPill" format="$username $wikiname $wikiusername"}%',
     );
     $this->assert( $ui =~ /No permission to view/ );
+
+    return;
 }
 
 #see http://trunk.foswiki.org/Tasks/Item8708
@@ -270,6 +299,8 @@ sub test_CaseSensitiveFormatString {
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'GlumDrop' );
     my $ui = $topicObject->expandMacros( '%REVINFO{format="$DATE"}%', );
     $this->assert_str_equals( '$DATE', $ui );
+
+    return;
 }
 
 # test for different revs and format strings
@@ -288,7 +319,7 @@ sub test_Item9538 {
 %REVINFO{"$topic $rev" rev=""}%
 %REVINFO{"$rev" topic="BlessMySoul"}%
 OFNIVER
-    $this->assert_str_equals( <<OFNIVER, $ui );
+    $this->assert_str_equals( <<"OFNIVER", $ui );
 1
 2
 3
@@ -317,6 +348,8 @@ OFNIVER
         $y = $topicObject->expandMacros("%REVINFO{\"$tf\"}%");
         $this->assert_str_equals( $x, $y );
     }
+
+    return;
 }
 
 # test for combinations of format strings
@@ -332,6 +365,8 @@ sub test_Item10476 {
     my $epoch = $topicObject->expandMacros('%REVINFO{"$epoch"}%');
     my $expected = Foswiki::Time::formatTime( $epoch, $format );
     $this->assert_str_equals( $ui, $expected );
+
+    return;
 }
 
 sub _createHistory {
