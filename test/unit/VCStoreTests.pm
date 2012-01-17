@@ -38,10 +38,11 @@
 # from the System web. in this case the TOPICINFO is used.
 
 package VCStoreTests;
+use strict;
+use warnings;
 
 use FoswikiStoreTestCase;
 our @ISA = qw( FoswikiStoreTestCase );
-use strict;
 
 use Foswiki;
 use Foswiki::Meta;
@@ -69,8 +70,7 @@ DONE
 
 sub set_up_for_verify {
     my $this = shift;
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
     # Clean up here in case test was aborted
     unlink "$Foswiki::cfg{DataDir}/$this->{test_web}/$this->{test_topic}.txt";
     unlink "$Foswiki::cfg{DataDir}/$this->{test_web}/$this->{test_topic}.txt,v";
