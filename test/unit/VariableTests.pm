@@ -5,10 +5,10 @@ package VariableTests;
 use strict;
 use warnings;
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
+use Foswiki();
 use Error qw( :try );
 
 sub set_up {
@@ -19,9 +19,9 @@ sub set_up {
     my $query = Unit::Request->new("");
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
     $this->createNewFoswikiSession( 'scum', $query );
-    $this->{test_topicObject} =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $this->{test_topic} );
+    $this->{test_topicObject}->finish() if $this->{test_topicObject};
+    ( $this->{test_topicObject} ) =
+      Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
 
     return;
 }
@@ -163,9 +163,9 @@ sub test_macroParams {
 | "%" | %WOOF% |
 | p"r"r | %WOOF{MIAOW="p$quot()r$quot()r"}% |
 INPUT
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $this->{test_topic}, $input );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
+    $topicObject->text($input);
     my $result   = $topicObject->expandMacros($input);
     my $expected = <<'EXPECTED';
 | gloop | gloop |
@@ -178,6 +178,7 @@ INPUT
 | p"r"r | p"r"r |
 EXPECTED
     $this->assert_str_equals( $expected, $result );
+    $topicObject->finish();
 
     return;
 }
