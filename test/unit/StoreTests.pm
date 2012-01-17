@@ -5,19 +5,19 @@
 #
 # These tests must be independent of the actual store implementation.
 
+package StoreTests;
+use strict;
+use warnings;
 require 5.006;
 
-package StoreTests;
-
-use FoswikiStoreTestCase;
+use FoswikiStoreTestCase();
 our @ISA = qw( FoswikiStoreTestCase );
 
-use Foswiki;
-use strict;
 use Assert;
+use Foswiki();
+use File::Temp();
+use Foswiki::AccessControlException();
 use Error qw( :try );
-use Foswiki::AccessControlException;
-use File::Temp;
 
 #TODO
 # attachments
@@ -30,11 +30,6 @@ use File::Temp;
 # search
 # getRevisionAtTime
 
-sub new {
-    my $self = shift()->SUPER::new(@_);
-    return $self;
-}
-
 my $web   = "TemporaryTestStoreWeb";
 my $topic = "TestStoreTopic";
 
@@ -45,14 +40,17 @@ sub set_up {
 
     my $testWebObj = Foswiki::Meta->new( $this->{session}, $web );
     $testWebObj->populateNewWeb();
+    $testWebObj->finish();
 
     #  Store doesn't do access checks anyway, so run as admin
     #  so that Func:: works
     $this->createNewFoswikiSession( $Foswiki::cfg{AdminUserLogin} );
 
-    open( FILE, ">$Foswiki::cfg{TempfileDir}/testfile.gif" );
-    print FILE "one two three";
-    close(FILE);
+    ASSERT( open( my $FILE, '>', "$Foswiki::cfg{TempfileDir}/testfile.gif" ) );
+    print $FILE "one two three";
+    ASSERT( close($FILE) );
+
+    return;
 }
 
 sub tear_down {
@@ -63,11 +61,15 @@ sub tear_down {
     unlink("$Foswiki::cfg{TempfileDir}/testfile.gif");
 
     $this->SUPER::tear_down();
+
+    return;
 }
 
 sub set_up_for_verify {
 
     # Required to satisfy superclass
+
+    return;
 }
 
 #============================================================================
@@ -86,6 +88,9 @@ sub verify_CreateEmptyWeb {
       ;    #we expect there to be only the preferences topic
     $this->assert_equals( $Foswiki::cfg{WebPrefsTopicName}, $tops );
     $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Create a web using _default template
@@ -101,11 +106,15 @@ sub verify_CreateWeb {
     my $it     = $webObject->eachTopic();
     my @topics = $it->all();
     $webObject->removeFromStore();
+    $webObject->finish();
     $webObject = Foswiki::Meta->new( $this->{session}, '_default' );
     $it = $webObject->eachTopic();
     my @defaultTopics = $it->all();
     $this->assert_equals( $#topics, $#defaultTopics,
         join( ",", @topics ) . " != " . join( ',', @defaultTopics ) );
+    $webObject->finish();
+
+    return;
 }
 
 # Create a web using non-existent Web - it should not create the web
@@ -122,6 +131,8 @@ sub verify_CreateWebWithNonExistantBaseWeb {
     };
     $this->assert($ok);
     $this->assert( !$this->{session}->webExists($web) );
+
+    return;
 }
 
 # Create a simple topic containing only text
@@ -140,6 +151,9 @@ sub verify_CreateSimpleTextTopic {
     $this->assert_str_equals( $text, $readMeta->text );
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
     $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Create a simple topic containing meta-data
@@ -167,7 +181,9 @@ sub verify_CreateSimpleMetaTopic {
     }
     $this->assert_deep_equals( $meta, $readMeta );
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
-    $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Save a second version of a topic, without forcing a new revision. Should
@@ -208,6 +224,9 @@ sub verify_noForceRev_RepRev {
     #cleanup
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
     $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Save a topic, forcing a new revision. Should increment the rev number.
@@ -245,6 +264,9 @@ sub verify_ForceRev {
     #cleanup
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
     $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Get the revision info of the latest rev of the topic.
@@ -278,6 +300,9 @@ sub verify_getRevisionInfo {
  #getRevisionDiff (  $web, $topic, $rev1, $rev2, $contextLines  ) -> \@diffArray
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
     $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Move a topic to another name in the same web
@@ -316,7 +341,9 @@ sub verify_moveTopic {
     #compare list of references to moved topic
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
     $webObject->removeFromStore();
+    $webObject->finish();
 
+    return;
 }
 
 # Check that leases are taken, and timed correctly
@@ -347,6 +374,9 @@ sub verify_leases {
     $this->assert_null($lease);
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
     $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Handler used in next test
@@ -358,6 +388,8 @@ sub beforeSaveHandler {
     if ( $text =~ /CHANGEMETA/ ) {
         $meta->putKeyed( 'FIELD', { name => 'fieldname', value => 'meta' } );
     }
+
+    return;
 }
 
 use Foswiki::Plugin;
@@ -379,7 +411,9 @@ sub verify_beforeSaveHandlerChangeText {
         @{
             $this->{session}->{plugins}->{registeredHandlers}{beforeSaveHandler}
           },
-        new Foswiki::Plugin( $this->{session}, "StoreTestPlugin", 'StoreTests' )
+        Foswiki::Plugin->new(
+            $this->{session}, "StoreTestPlugin", 'StoreTests'
+        )
     );
 
     my $text = 'CHANGETEXT';
@@ -405,6 +439,9 @@ sub verify_beforeSaveHandlerChangeText {
     $this->assert_str_equals( $meta->stringify(), $readMeta->stringify() );
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
     $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Ensure the beforeSaveHandler is called when saving meta changes
@@ -424,7 +461,9 @@ sub verify_beforeSaveHandlerChangeMeta {
         @{
             $this->{session}->{plugins}->{registeredHandlers}{beforeSaveHandler}
           },
-        new Foswiki::Plugin( $this->{session}, "StoreTestPlugin", 'StoreTests' )
+        Foswiki::Plugin->new(
+            $this->{session}, "StoreTestPlugin", 'StoreTests'
+        )
     );
 
     my $text = 'CHANGEMETA';
@@ -449,6 +488,9 @@ sub verify_beforeSaveHandlerChangeMeta {
     $this->assert_str_equals( $meta->stringify(), $readMeta->stringify() );
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
     $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Ensure the beforeSaveHandler is called when saving text and meta changes
@@ -468,7 +510,9 @@ sub verify_beforeSaveHandlerChangeBoth {
         @{
             $this->{session}->{plugins}->{registeredHandlers}{beforeSaveHandler}
           },
-        new Foswiki::Plugin( $this->{session}, "StoreTestPlugin", 'StoreTests' )
+        Foswiki::Plugin->new(
+            $this->{session}, "StoreTestPlugin", 'StoreTests'
+        )
     );
 
     my $text = 'CHANGEMETA CHANGETEXT';
@@ -495,6 +539,9 @@ sub verify_beforeSaveHandlerChangeBoth {
     $this->assert_str_equals( $meta->stringify(), $readMeta->stringify() );
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
     $webObject->removeFromStore();
+    $webObject->finish();
+
+    return;
 }
 
 # Handler used in next test
@@ -511,12 +558,14 @@ sub beforeUploadHandler {
 
     $text =~ s/call/beforeUploadHandler/;
 
-    $fh = new File::Temp();
+    $fh = File::Temp->new();
     print $fh $text;
 
     # $fh->seek only in File::Temp 0.17 and later
     seek( $fh, 0, 0 );
     $attrHash->{stream} = $fh;
+
+    return;
 }
 
 # Handler used in next test
@@ -527,17 +576,19 @@ sub beforeAttachmentSaveHandler {
     die "comment $attrHash->{comment}"
       unless $attrHash->{comment} eq "a comment";
 
-    open( F, '<', $attrHash->{tmpFilename} )
-      || die "$attrHash->{tmpFilename}: $!";
+    ASSERT( open( my $F, '<', $attrHash->{tmpFilename} ),
+        "$attrHash->{tmpFilename}: $!" );
     local $/ = undef;
-    my $text = <F>;
-    close(F) || die "$attrHash->{tmpFilename}: $!";
+    my $text = <$F>;
+    ASSERT( close($F), "$attrHash->{tmpFilename}: $!" );
 
     $text =~ s/call/beforeAttachmentSaveHandler/;
-    open( F, '>', $attrHash->{tmpFilename} )
-      || die "$attrHash->{tmpFilename}: $!";
-    print F $text;
-    close(F) || die "$attrHash->{tmpFilename}: $!";
+    ASSERT( open( $F, '>', $attrHash->{tmpFilename} ),
+        "$attrHash->{tmpFilename}: $!" );
+    print $F $text;
+    ASSERT( close($F), "$attrHash->{tmpFilename}: $!" );
+
+    return;
 }
 
 # Handler used in next test
@@ -547,6 +598,8 @@ sub afterAttachmentSaveHandler {
       unless $attrHash->{attachment} eq "testfile.gif";
     die "comment $attrHash->{comment}"
       unless $attrHash->{comment} eq "a comment";
+
+    return;
 }
 
 # Handler used in next test
@@ -556,6 +609,8 @@ sub afterUploadHandler {
       unless $attrHash->{attachment} eq "testfile.gif";
     die "comment $attrHash->{comment}"
       unless $attrHash->{comment} eq "a comment";
+
+    return;
 }
 
 sub registerAttachmentHandlers {
@@ -567,37 +622,48 @@ sub registerAttachmentHandlers {
             $this->{session}->{plugins}
               ->{registeredHandlers}{beforeAttachmentSaveHandler}
           },
-        new Foswiki::Plugin( $this->{session}, "StoreTestPlugin", 'StoreTests' )
+        Foswiki::Plugin->new(
+            $this->{session}, "StoreTestPlugin", 'StoreTests'
+        )
     );
     push(
         @{
             $this->{session}->{plugins}
               ->{registeredHandlers}{beforeUploadHandler}
           },
-        new Foswiki::Plugin( $this->{session}, "StoreTestPlugin", 'StoreTests' )
+        Foswiki::Plugin->new(
+            $this->{session}, "StoreTestPlugin", 'StoreTests'
+        )
     );
     push(
         @{
             $this->{session}->{plugins}
               ->{registeredHandlers}{afterAttachmentSaveHandler}
           },
-        new Foswiki::Plugin( $this->{session}, "StoreTestPlugin", 'StoreTests' )
+        Foswiki::Plugin->new(
+            $this->{session}, "StoreTestPlugin", 'StoreTests'
+        )
     );
     push(
         @{
             $this->{session}->{plugins}
               ->{registeredHandlers}{afterUploadHandler}
           },
-        new Foswiki::Plugin( $this->{session}, "StoreTestPlugin", 'StoreTests' )
+        Foswiki::Plugin->new(
+            $this->{session}, "StoreTestPlugin", 'StoreTests'
+        )
     );
+
+    return;
 }
 
 sub verify_attachmentSaveHandlers_file {
     my $this = shift;
 
-    open( FILE, ">$Foswiki::cfg{TempfileDir}/testfile.gif" );
-    print FILE "call call call";
-    close(FILE);
+    $this->assert(
+        open( my $FILE, '>', "$Foswiki::cfg{TempfileDir}/testfile.gif" ) );
+    print $FILE "call call call";
+    $this->assert( close($FILE) );
 
     Foswiki::Func::createWeb( $web, '_default' );
     my $meta = Foswiki::Meta->new( $this->{session}, $web, $topic, '' );
@@ -615,17 +681,20 @@ sub verify_attachmentSaveHandlers_file {
 
     my $fh = $meta->openAttachment( "testfile.gif", '<' );
     my $text = <$fh>;
-    close($fh);
+    $this->assert( close($fh) );
     $this->assert_str_equals(
         "beforeAttachmentSaveHandler beforeUploadHandler call", $text );
+
+    return;
 }
 
 sub verify_attachmentSaveHandlers_stream {
     my $this = shift;
 
-    open( FILE, ">$Foswiki::cfg{TempfileDir}/testfile.gif" );
-    print FILE "call call call";
-    close(FILE);
+    $this->assert(
+        open( my $FILE, '>', "$Foswiki::cfg{TempfileDir}/testfile.gif" ) );
+    print $FILE "call call call";
+    $this->assert( close($FILE) );
 
     Foswiki::Func::createWeb( $web, '_default' );
     my $meta = Foswiki::Meta->new( $this->{session}, $web, $topic, '' );
@@ -633,7 +702,8 @@ sub verify_attachmentSaveHandlers_stream {
 
     $this->registerAttachmentHandlers();
 
-    $this->assert( open( my $fh, "$Foswiki::cfg{TempfileDir}/testfile.gif" ) );
+    $this->assert(
+        open( my $fh, '<', "$Foswiki::cfg{TempfileDir}/testfile.gif" ) );
     $meta->attach(
         name    => "testfile.gif",
         stream  => $fh,
@@ -644,17 +714,20 @@ sub verify_attachmentSaveHandlers_stream {
 
     $fh = $meta->openAttachment( "testfile.gif", '<' );
     my $text = <$fh>;
-    close($fh);
+    $this->assert( close($fh) );
     $this->assert_str_equals(
         "beforeAttachmentSaveHandler beforeUploadHandler call", $text );
+
+    return;
 }
 
 sub verify_attachmentSaveHandlers_file_and_stream {
     my $this = shift;
 
-    open( FILE, ">$Foswiki::cfg{TempfileDir}/testfile.gif" );
-    print FILE "call call call";
-    close(FILE);
+    $this->assert(
+        open( my $FILE, '>', "$Foswiki::cfg{TempfileDir}/testfile.gif" ) );
+    print $FILE "call call call";
+    $this->assert( close($FILE) );
 
     Foswiki::Func::createWeb( $web, '_default' );
     my $meta = Foswiki::Meta->new( $this->{session}, $web, $topic, '' );
@@ -662,7 +735,8 @@ sub verify_attachmentSaveHandlers_file_and_stream {
 
     $this->registerAttachmentHandlers();
 
-    $this->assert( open( my $fh, "$Foswiki::cfg{TempfileDir}/testfile.gif" ) );
+    $this->assert(
+        open( my $fh, '<', "$Foswiki::cfg{TempfileDir}/testfile.gif" ) );
     $meta->attach(
         name    => "testfile.gif",
         file    => "$Foswiki::cfg{TempfileDir}/testfile.gif",
@@ -674,9 +748,11 @@ sub verify_attachmentSaveHandlers_file_and_stream {
 
     $fh = $meta->openAttachment( "testfile.gif", '<' );
     my $text = <$fh>;
-    close($fh);
+    $this->assert( close($fh) );
     $this->assert_str_equals(
         "beforeAttachmentSaveHandler beforeUploadHandler call", $text );
+
+    return;
 }
 
 sub verify_eachChange {
@@ -727,6 +803,8 @@ sub verify_eachChange {
     $this->assert_str_equals( "ClutterBuck", $change->{topic} );
     $this->assert_equals( 2, $change->{revision} );
     $this->assert( !$it->hasNext() );
+
+    return;
 }
 
 sub verify_eachAttachment {
@@ -749,9 +827,9 @@ sub verify_eachAttachment {
 
     my $f =
       "$Foswiki::cfg{PubDir}/$this->{test_web}/$this->{test_topic}/noise.dat";
-    $this->assert( open( F, ">", $f ) );
-    print F "Naff\n";
-    close(F);
+    $this->assert( open( my $F, ">", $f ) );
+    print $F "Naff\n";
+    close($F);
     $this->assert( -e $f );
 
     $meta->save();
@@ -806,6 +884,8 @@ sub verify_eachAttachment {
     $it = $this->{session}->{store}->eachAttachment($postDeleteMeta);
     $list = join( ' ', sort $it->all() );
     $this->assert_str_equals( "noise.dat", $list );
+
+    return;
 }
 
 1;
