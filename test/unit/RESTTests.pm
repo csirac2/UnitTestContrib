@@ -67,6 +67,8 @@ sub test_endPoint {
     $this->assert_matches( qr#^Status: 302#m, $text );
     $this->assert_matches(
         qr#^Location:.*$this->{test_web}/$this->{test_topic}\s*$#m, $text );
+
+    return;
 }
 
 # Test the endPoint parameter with anchor
@@ -74,22 +76,22 @@ sub test_endPoint_Anchor {
     my $this = shift;
     Foswiki::Func::registerRESTHandler( 'trial', \&rest_handler );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action   => ['rest'],
             endPoint => "$this->{test_web}/$this->{test_topic}#MyAnch",
         }
     );
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
-    $this->{session}->finish();
     $query->method('post');
-    $this->{session} =
-      $this->createNewFoswikiSession( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my ($text) = $this->capture( $UI_FN, $this->{session} );
     $this->assert_matches( qr#^Status: 302#m, $text );
     $this->assert_matches(
         qr#^Location:.*$this->{test_web}/$this->{test_topic}\#MyAnch\s*$#m,
         $text );
+
+    return;
 }
 
 # Test the endPoint parameter with querystring
@@ -97,23 +99,23 @@ sub test_endPoint_Query {
     my $this = shift;
     Foswiki::Func::registerRESTHandler( 'trial', \&rest_handler );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action   => ['rest'],
             endPoint => "$this->{test_web}/$this->{test_topic}?blah1=;q=2&y=3",
         }
     );
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
-    $this->{session}->finish();
     $query->method('post');
-    $this->{session} =
-      $this->createNewFoswikiSession( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my ($text) = $this->capture( $UI_FN, $this->{session} );
     $this->assert_matches( qr#^Status: 302#m, $text );
     $this->assert_matches(
 qr#^Location:.*$this->{test_web}/$this->{test_topic}\?blah1=;q=2&y=3\s*$#m,
         $text
     );
+
+    return;
 }
 
 # Test the endPoint parameter with querystring
@@ -121,14 +123,13 @@ sub test_endPoint_Illegal {
     my $this = shift;
     Foswiki::Func::registerRESTHandler( 'trial', \&rest_handler );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action   => ['rest'],
             endPoint => 'http://this/that?blah=1;q=2',
         }
     );
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
-    $this->{session}->finish();
     $query->method('post');
     $this->{session} =
       $this->createNewFoswikiSession( $this->{test_user_login}, $query );
