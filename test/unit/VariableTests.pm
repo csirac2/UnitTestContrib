@@ -1,9 +1,9 @@
-use strict;
-
 # tests for the correct expansion of preferences (*not* FoswikiFns, which
 # should have their own individual testcase)
 
 package VariableTests;
+use strict;
+use warnings;
 
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
@@ -18,8 +18,7 @@ sub set_up {
 
     my $query = new Unit::Request("");
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( 'scum', $query );
+    $this->createNewFoswikiSession( 'scum', $query );
     $this->{test_topicObject} =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
         $this->{test_topic} );
