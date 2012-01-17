@@ -174,6 +174,7 @@ sub test_validate {
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
     $query->method('post');
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
+
     # Make sure a request with no validation key is trapped
     try {
         $this->capture( $UI_FN, $this->{session} );
@@ -201,6 +202,7 @@ sub test_authenticate {
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
     $query->method('post');
     $this->createNewFoswikiSession( undef, $query );
+
     # Make sure a request with no authentication is trapped
     try {
         $this->capture( $UI_FN, $this->{session} );
