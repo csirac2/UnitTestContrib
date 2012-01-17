@@ -4,10 +4,10 @@ package Fn_IF;
 use strict;
 use warnings;
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
+use Foswiki();
 use Error qw( :try );
 use Assert;
 use Foswiki::Query::Node           ();
@@ -17,7 +17,7 @@ my $post11;
 
 sub new {
     my ( $class, @args ) = @_;
-    my $dep = new Foswiki::Configure::Dependency(
+    my $dep = Foswiki::Configure::Dependency->new(
         type    => "perl",
         module  => "Foswiki",
         version => ">=1.2"
@@ -1283,22 +1283,20 @@ sub set_up {
     my $this = shift;
     $this->SUPER::set_up(@_);
 
-    my $topicObject = Foswiki::Meta->new(
-        $this->{session},
-        $this->{users_web},
-        "GropeGroup",
-        "   * Set GROUP = "
-          . Foswiki::Func::getWikiName( $this->{session}->{user} ) . "\n"
-    );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{users_web}, "GropeGroup" );
+    $topicObject->text( "   * Set GROUP = "
+          . Foswiki::Func::getWikiName( $this->{session}->{user} )
+          . "\n" );
     $topicObject->save();
+    $topicObject->finish();
 
     # Create WebHome topic to trap existance errors related to
     # normalizeWebTopicName
-    $topicObject = Foswiki::Meta->new(
-        $this->{session}, $this->{test_web},
-        "WebHome",        "Gormless gimboid\n"
-    );
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, "WebHome" );
+    $topicObject->text("Gormless gimboid\n");
     $topicObject->save();
+    $topicObject->finish();
 
     return;
 }
@@ -1337,14 +1335,15 @@ sub simpleTest {
 sub test_INCLUDEparams {
     my $this = shift;
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, "DeadHerring",
-        <<'SMELL');
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, "DeadHerring" );
+    $topicObject->text( <<'SMELL');
 one %IF{ "defined NAME" then="1" else="0" }%
 two %IF{ "$ NAME='%NAME%'" then="1" else="0" }%
 three %IF{ "$ NAME=$ 'NAME{}'" then="1" else="0" }%
 SMELL
     $topicObject->save();
+    $topicObject->finish();
     my $text = <<'PONG';
 %INCLUDE{"DeadHerring" NAME="Red" warn="on"}%
 PONG
@@ -1381,14 +1380,15 @@ sub test_badIF {
 sub test_ContentAccessSyntax {
     my $this = shift;
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, "DeadHerring",
-        <<'SMELL');
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, "DeadHerring" );
+    $topicObject->text( <<'SMELL');
 one %IF{ "BleaghForm.Wibble='Woo'" then="1" else="0" }%
 %META:FORM{name="BleaghForm"}%
 %META:FIELD{name="Wibble" title="Wobble" value="Woo"}%
 SMELL
     $topicObject->save();
+    $topicObject->finish();
     my $text = <<'PONG';
 %INCLUDE{"DeadHerring" NAME="Red" warn="on"}%
 PONG
@@ -1401,13 +1401,13 @@ PONG
 sub test_ALLOWS_and_EXISTS {
     my $this = shift;
     my $wn   = Foswiki::Func::getWikiName( $this->{session}->{user} );
-    my $meta =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, "DeadDog",
-        <<"PONG");
+    my ($meta) = Foswiki::Func::readTopic( $this->{test_web}, "DeadDog" );
+    $meta->text( <<"PONG");
    * Set ALLOWTOPICVIEW = WibbleFloon
    * Set ALLOWTOPICCHANGE = $wn
 PONG
     $meta->save();
+    $meta->finish();
 
     my @tests;
     push(
@@ -1548,9 +1548,8 @@ PONG
     my $request = Unit::Request->new( {} );
     $request->path_info("/$this->{test_web}/$this->{test_topic}");
     $this->createNewFoswikiSession( undef, $request );
-    $meta =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $this->{test_topic} );
+    ($meta) =
+      Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
 
     foreach my $test (@tests) {
         my $text   = '%IF{"' . $test->{test} . '" then="1" else="0"}%';
@@ -1558,6 +1557,7 @@ PONG
         $this->assert_str_equals( $test->{expect}, $result,
             "$text: '$result'" );
     }
+    $meta->finish();
 
     return;
 }
@@ -1567,10 +1567,11 @@ sub test_DOS {
     my $text = <<'PONG';
    * Set LOOP = %IF{"$ LOOP = '1'" then="ping" else="pong"}%
 PONG
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $this->{test_topic}, $text );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
+    $topicObject->text($text);
     $topicObject->save();
+    $topicObject->finish();
     my $result = $this->{test_topicObject}->expandMacros($text);
     $this->assert_str_equals( "   * Set LOOP = pong\n", $result );
 
@@ -1582,15 +1583,14 @@ sub test_TOPICINFO {
 
     my $topicName = 'TopicInfo';
 
-    my $meta =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, $topicName,
-        <<'PONG');
+    my ($meta) = Foswiki::Func::readTopic( $this->{test_web}, $topicName );
+    $meta->text( <<'PONG');
 oneapeny twoapenny we all fall down
 PONG
     $meta->save();
+    $meta->finish();
 
-    $meta =
-      Foswiki::Meta->load( $this->{session}, $this->{test_web}, $topicName );
+    ($meta) = Foswiki::Func::readTopic( $this->{test_web}, $topicName );
     $meta->getRevisionInfo();
     my $ti = $meta->get('TOPICINFO');
 
@@ -1659,6 +1659,7 @@ PONG
         $this->assert_str_equals( $test->{expect}, $result,
             "$text: '$result'" );
     }
+    $meta->finish();
 
     return;
 }
