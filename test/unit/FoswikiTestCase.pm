@@ -720,12 +720,12 @@ __DO NOT CALL session->finish() yourself__
 sub createNewFoswikiSession {
     my ( $this, $user, $query, @args ) = @_;
 
+    $this->{test_topicObject}->finish() if $this->{test_topicObject};
     $this->{session}->finish() if $this->{session};
     ASSERT(!defined $Foswiki::Plugins::SESSION) if SESSION_SANITY;
     $this->{session}           = Foswiki->new( $user, $query, @args );
     $this->{request}           = $this->{session}{request};
     ASSERT(defined $Foswiki::Plugins::SESSION) if SESSION_SANITY;
-    $this->{test_topicObject}->finish() if $this->{test_topicObject};
     ( $this->{test_topicObject} ) =
       Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
 
