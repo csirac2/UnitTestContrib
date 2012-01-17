@@ -71,6 +71,7 @@ DONE
 sub set_up_for_verify {
     my $this = shift;
     $this->createNewFoswikiSession();
+
     # Clean up here in case test was aborted
     unlink "$Foswiki::cfg{DataDir}/$this->{test_web}/$this->{test_topic}.txt";
     unlink "$Foswiki::cfg{DataDir}/$this->{test_web}/$this->{test_topic}.txt,v";
