@@ -28,34 +28,46 @@ sub set_up {
     $VIEW_UI_FN ||= $this->getUIFn('view');
     my $topicObject = Foswiki::Meta->new(
         $this->{session},    $this->{test_web},
-        $this->{test_topic}, <<CONSTRAINT);
+        $this->{test_topic}, <<'CONSTRAINT');
    * Set ALLOWTOPICCHANGE = AdminGroup
 CONSTRAINT
     $topicObject->save();
+
+    return;
 }
 
 sub TemplateLoginManager {
     $Foswiki::cfg{LoginManager} = 'Foswiki::LoginManager::TemplateLogin';
+
+    return;
 }
 
 sub ApacheLoginManager {
     $Foswiki::cfg{LoginManager} = 'Foswiki::LoginManager::ApacheLogin';
+
+    return;
 }
 
 sub NoLoginManager {
     $Foswiki::cfg{LoginManager} = 'none';
+
+    return;
 }
 
 sub BaseUserMapping {
     my $this = shift;
     $Foswiki::cfg{UserMappingManager} = 'Foswiki::Users::BaseUserMapping';
     $this->set_up_for_verify();
+
+    return;
 }
 
 sub TopicUserMapping {
     my $this = shift;
     $Foswiki::cfg{UserMappingManager} = 'Foswiki::Users::TopicUserMapping';
     $this->set_up_for_verify();
+
+    return;
 }
 
 # See the pod doc in Unit::TestCase for details of how to use this
@@ -78,6 +90,8 @@ sub set_up_for_verify {
     $Foswiki::cfg{AuthScripts}        = "edit";
     $Foswiki::cfg{Register}{EnableNewUserRegistration} = 1;
     $Foswiki::cfg{UsersWebName} = $this->{users_web};
+
+    return;
 }
 
 sub set_up_user {
@@ -99,13 +113,16 @@ sub set_up_user {
     }
 
 #print STDERR "\n------------- set_up_user (login: $userLogin) (cUID:$user_id) -----------------\n";
+
+    return;
 }
 
 sub capture {
-    my $this = shift;
-    my ( $proc, $session ) = @_;
+    my ( $this, $proc, $session, @args ) = @_;
     $session->getLoginManager()->checkAccess();
-    $this->SUPER::capture(@_);
+    $this->SUPER::capture( $proc, $session, @args );
+
+    return;
 }
 
 sub verify_edit {
@@ -117,7 +134,7 @@ sub verify_edit {
 
     #close this Foswiki session - its using the wrong mapper and login
 
-    $query = new Unit::Request();
+    $query = Unit::Request->new();
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
     $this->createNewFoswikiSession( undef, $query );
 
@@ -132,7 +149,7 @@ sub verify_edit {
         $this->assert( 0, shift->stringify() );
     };
 
-    $query = new Unit::Request();
+    $query = Unit::Request->new();
     $query->path_info("/$this->{test_web}/$this->{test_topic}?breaklock=1");
 
     $this->createNewFoswikiSession( undef, $query );
@@ -152,7 +169,7 @@ sub verify_edit {
         }
     };
 
-    $query = new Unit::Request();
+    $query = Unit::Request->new();
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
 
     $this->annotate("new session using $userLogin\n");
@@ -162,6 +179,8 @@ sub verify_edit {
 #clear the lease - one of the previous tests may have different usermapper & thus different user
     Foswiki::Func::setTopicEditLock( $this->{test_web}, $this->{test_topic},
         0 );
+
+    return;
 }
 
 sub verify_sudo_login {
@@ -174,7 +193,7 @@ sub verify_sudo_login {
     my $crypted = crypt( $secret, "12" );
     $Foswiki::cfg{Password} = $crypted;
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             username => [ $Foswiki::cfg{AdminUserLogin} ],
             password => [$secret],
@@ -193,6 +212,8 @@ sub verify_sudo_login {
     $this->assert_matches( qr/^302/, $this->{session}->{response}->status() );
     $this->assert_matches( qr/^$surly/,
         $this->{session}->{response}->headers()->{Location} );
+
+    return;
 }
 
 1;
