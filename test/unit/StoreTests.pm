@@ -48,8 +48,7 @@ sub set_up {
 
     #  Store doesn't do access checks anyway, so run as admin
     #  so that Func:: works
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $Foswiki::cfg{AdminUserLogin} );
+    $this->createNewFoswikiSession( $Foswiki::cfg{AdminUserLogin} );
 
     open( FILE, ">$Foswiki::cfg{TempfileDir}/testfile.gif" );
     print FILE "one two three";
@@ -67,6 +66,7 @@ sub tear_down {
 }
 
 sub set_up_for_verify {
+
     # Required to satisfy superclass
 }
 
@@ -84,7 +84,7 @@ sub verify_CreateEmptyWeb {
     my $tops = join( " ", @topics );
     $this->assert_equals( 1, scalar(@topics), $tops )
       ;    #we expect there to be only the preferences topic
-    $this->assert_equals($Foswiki::cfg{WebPrefsTopicName}, $tops);
+    $this->assert_equals( $Foswiki::cfg{WebPrefsTopicName}, $tops );
     $webObject->removeFromStore();
 }
 
@@ -184,7 +184,7 @@ sub verify_noForceRev_RepRev {
 
     ( $date, $user, $rev, $comment ) =
       Foswiki::Func::getRevisionInfo( $web, $topic );
-    $this->assert_num_equals( 0, $rev ); # topic does not exist
+    $this->assert_num_equals( 0, $rev );    # topic does not exist
 
     my $text = "This is some test text\n   * some list\n   * content\n :) :)";
     my $meta = Foswiki::Meta->new( $this->{session}, $web, $topic, $text );
@@ -221,7 +221,7 @@ sub verify_ForceRev {
     my ( $date, $user, $rev, $comment );
     ( $date, $user, $rev, $comment ) =
       Foswiki::Func::getRevisionInfo( $web, $topic );
-    $this->assert_num_equals( 0, $rev ); # doesn't exist yet
+    $this->assert_num_equals( 0, $rev );    # doesn't exist yet
 
     my $text = "This is some test text\n   * some list\n   * content\n :) :)";
     my $meta = Foswiki::Meta->new( $this->{session}, $web, $topic, $text );
