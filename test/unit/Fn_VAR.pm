@@ -1,8 +1,8 @@
-use strict;
-
 # tests for the correct expansion of VAR
 
 package Fn_VAR;
+use strict;
+use warnings;
 
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
@@ -34,8 +34,7 @@ SPLOT
 SPLOT
     $topicObject->save();
 
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
     $topicObject =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
         $this->{test_topic} );
