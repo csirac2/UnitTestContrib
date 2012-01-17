@@ -16,19 +16,20 @@
 package PluginHandlerTests;
 use strict;
 use warnings;
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
+use Foswiki();
 use Error qw( :try );
-use Foswiki::Plugin;
+use Foswiki::Plugin();
 use Symbol qw(delete_package);
 
 my $systemWeb = "TemporaryPluginHandlersSystemWeb";
 
 sub new {
-    my $self = shift()->SUPER::new( "PluginHandlers", @_ );
-    return $self;
+    my ( $class, @args ) = @_;
+
+    return $class->SUPER::new( "PluginHandlers", @args );
 }
 
 # Set up the test fixture.
@@ -39,6 +40,7 @@ sub set_up {
     my $testWebObject =
       Foswiki::Meta->new( $this->{session}, $this->{test_web} );
     $testWebObject->populateNewWeb();
+    $testWebObject->finish();
 
     # Disable all plugins
     foreach my $key ( keys %{ $Foswiki::cfg{Plugins} } ) {
@@ -62,6 +64,8 @@ sub set_up {
     $webObject->populateNewWeb( $Foswiki::cfg{SystemWebName} );
     $Foswiki::cfg{SystemWebName} = $systemWeb;
     $Foswiki::cfg{Plugins}{WebSearchPath} = $systemWeb;
+
+    return;
 }
 
 sub tear_down {
@@ -71,6 +75,8 @@ sub tear_down {
     unlink( $this->{plugin_pm} );
     Symbol::delete_package("Foswiki::Foswiki::$this->{plugin_name}");
     $this->SUPER::tear_down();
+
+    return;
 }
 
 # Build the plugin source, using the code passed in $code as the
@@ -82,7 +88,7 @@ sub makePlugin {
     $this->{plugin_name} = ucfirst("${test}Plugin");
     $this->{plugin_pm}   = $this->{code_root} . $this->{plugin_name} . ".pm";
 
-    $code = <<HERE;
+    $code = <<"HERE";
 package Foswiki::Plugins::$this->{plugin_name};
 
 use vars qw( \$called \$tester \$VERSION );
@@ -97,10 +103,12 @@ sub initPlugin {
 $code
 1;
 HERE
-    open( F, ">$this->{plugin_pm}" )
-      || die "Failed to open $this->{plugin_pm}: $!";
-    print F $code;
-    close(F);
+    $this->assert(
+        open( my $F, ">$this->{plugin_pm}" ),
+        "Failed to open $this->{plugin_pm}: $!"
+    );
+    print $F $code;
+    $this->assert( close($F) );
     try {
         my $topicObject =
           Foswiki::Meta->new( $this->{session}, $Foswiki::cfg{SystemWebName},
@@ -121,7 +129,8 @@ EOF
     $this->createNewFoswikiSession();    # default user
     eval "\$Foswiki::Plugins::$this->{plugin_name}::tester = \$this;";
     $this->checkCalls( 1, 'initPlugin' );
-    $Foswiki::Plugins::SESSION = $this->{session};
+
+    return;
 }
 
 sub checkCalls {
@@ -130,6 +139,8 @@ sub checkCalls {
       eval "\$Foswiki::Plugins::$this->{plugin_name}::called->{$name} || 0";
     $this->assert_equals( $number, $saw,
         "calls($name) $saw != $number " . join( ' ', caller ) );
+
+    return;
 }
 
 sub test_saveHandlers {
@@ -223,6 +234,7 @@ HERE
     $this->assert_str_equals( "AFTER",
         Foswiki::Func::getPreferencesValue("BLAH") );
 
+    return;
 }
 
 sub test_commonTagsHandlers {
@@ -268,6 +280,8 @@ HERE
     $this->checkCalls( 1, 'beforeCommonTagsHandler' );
     $this->checkCalls( 1, 'commonTagsHandler' );
     $this->checkCalls( 1, 'afterCommonTagsHandler' );
+
+    return;
 }
 
 sub test_earlyInit {
@@ -298,6 +312,8 @@ HERE
     $this->checkCalls( 1, 'earlyInitPlugin' );
     $this->checkCalls( 1, 'initPlugin' );
     $this->checkCalls( 1, 'initializeUserHandler' );
+
+    return;
 }
 
 # Test that the rendering handlers are called in the correct sequence.
@@ -449,7 +465,7 @@ sub outsidePREHandler {
     $called->{outsidePREHandler}++;
 }
 HERE
-    my $text = <<HERE;
+    my $text = <<'HERE';
 <literal>
 LITERAL
 </literal>
@@ -472,7 +488,7 @@ HERE
     @oprelines = ();
     @iprelines = ();
     my $out = Foswiki::Func::renderText( $text, "Gruntfos" ) . "\n";
-    $this->assert_str_equals( <<HERE, $out );
+    $this->assert_str_equals( <<'HERE', $out );
 postRenderingHandler
 endRenderingHandler
 preRenderingHandler
@@ -511,6 +527,8 @@ HERE
     $this->checkCalls( 1, 'startRenderingHandler' );
     $this->checkCalls( 1, 'endRenderingHandler' );
     $this->checkCalls( 1, 'postRenderingHandler' );
+
+    return;
 }
 
 sub test_afterAttachmentSaveHandler {
@@ -521,6 +539,8 @@ sub afterAttachmentSaveHandler {
     $called->{afterAttachmentSaveHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_afterUploadHandler {
@@ -533,6 +553,8 @@ sub afterUploadHandler {
     $called->{afterUploadHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_afterEditHandler {
@@ -543,6 +565,8 @@ sub afterEditHandler {
     $called->{afterEditHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_afterRenameHandler {
@@ -554,6 +578,8 @@ sub afterRenameHandler {
     $called->{afterRenameHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_beforeAttachmentSaveHandler {
@@ -564,6 +590,8 @@ sub beforeAttachmentSaveHandler {
     $called->{beforeAttachmentSaveHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_beforeUploadHandler {
@@ -576,6 +604,8 @@ sub beforeUploadHandler {
     $called->{beforeUploadHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_beforeEditHandler {
@@ -586,6 +616,8 @@ sub beforeEditHandler {
     $called->{beforeEditHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_modifyHeaderHandler {
@@ -596,6 +628,8 @@ sub modifyHeaderHandler {
     $called->{modifyHeaderHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_mergeHandler {
@@ -606,6 +640,8 @@ sub mergeHandler {
     $called->{mergeHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_redirectrequestHandler {
@@ -616,6 +652,8 @@ sub redirectrequestHandler {
     $called->{redirectrequestHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_registrationHandler {
@@ -626,6 +664,8 @@ sub registrationHandler {
     $called->{registrationHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_renderFormFieldForEditHandler {
@@ -636,6 +676,8 @@ sub renderFormFieldForEditHandler {
     $called->{renderFormFieldForEditHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_renderWikiWordHandler {
@@ -646,6 +688,8 @@ sub renderWikiWordHandler {
     $called->{renderWikiWordHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_writeHeaderHandler {
@@ -656,6 +700,8 @@ sub writeHeaderHandler {
     $called->{writeHeaderHandler}++;
 }
 HERE
+
+    return;
 }
 
 sub test_finishPlugin {
@@ -669,6 +715,8 @@ HERE
     $this->finishFoswikiSession();
     $this->checkCalls( 1, 'finishPlugin' );
     $this->createNewFoswikiSession();
+
+    return;
 }
 
 1;
