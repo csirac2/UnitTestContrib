@@ -4,11 +4,12 @@
 # "sanity check" of store functionality. More complete tests of
 # VC functionality can be found in VCStoreTests and VCHandlerTests.
 package VCMetaTests;
+use strict;
+use warnings;
 
 use FoswikiStoreTestCase;
 our @ISA = qw( FoswikiStoreTestCase );
 
-use strict;
 use Foswiki;
 use Foswiki::Meta;
 use Error qw( :try );
@@ -28,8 +29,7 @@ sub set_up_for_verify {
     $Foswiki::cfg{WarningFileName} = "$Foswiki::cfg{TempfileDir}/junk";
     $Foswiki::cfg{LogFileName}     = "$Foswiki::cfg{TempfileDir}/junk";
 
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
 
     $testUser1 = "DummyUserOne";
     $testUser2 = "DummyUserTwo";
@@ -88,8 +88,7 @@ sub verify_checkin {
     $this->assert_num_equals( 1, $info->{version} );
 
     # Check-in with different text, under different user (to force change)
-    $this->{session}->finish();
-    $this->{session} = new Foswiki($testUser2);
+    $this->createNewFoswikiSession($testUser2);
     $text = "bye";
     $meta = Foswiki::Meta->new( $this->{session}, $this->{test_web}, $topic );
     $info = $meta->getRevisionInfo();
@@ -225,7 +224,7 @@ sub verify_releaselocksonsave {
     );
     $query->path_info("/$this->{test_web}/$topic");
 
-    $this->{session} = new Foswiki( $testUser1, $query );
+    $this->createNewFoswikiSession( $testUser1, $query );
     try {
         $this->captureWithKey( save => $UI_FN, $this->{session} );
     }
@@ -252,8 +251,7 @@ sub verify_releaselocksonsave {
         }
     );
     $query->path_info("/$this->{test_web}/$topic");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $testUser1, $query );
+    $this->createNewFoswikiSession( $testUser1, $query );
     try {
         $this->captureWithKey( save => $UI_FN, $this->{session} );
     }
@@ -277,8 +275,7 @@ sub verify_releaselocksonsave {
     );
 
     $query->path_info("/$this->{test_web}/$topic");
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $testUser2, $query );
+    $this->createNewFoswikiSession( $testUser2, $query );
     try {
         $this->captureWithKey( save => $UI_FN, $this->{session} );
         $this->annotate(
