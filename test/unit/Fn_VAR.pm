@@ -4,40 +4,39 @@ package Fn_VAR;
 use strict;
 use warnings;
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
+use Foswiki();
+use Foswiki::Func();
 use Error qw( :try );
-
-sub new {
-    my $self = shift()->SUPER::new( 'VAR', @_ );
-    return $self;
-}
 
 sub test_VAR {
     my $this = shift;
 
     my $result;
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $Foswiki::cfg{WebPrefsTopicName}, <<SPLOT);
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web},
+        $Foswiki::cfg{WebPrefsTopicName} );
+    $topicObject->text(<<'SPLOT');
    * Set BLEEGLE = gibbut
 SPLOT
     $topicObject->save();
+    $topicObject->finish();
 
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{users_web},
-        $Foswiki::cfg{WebPrefsTopicName}, <<SPLOT);
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{users_web},
+        $Foswiki::cfg{WebPrefsTopicName} );
+    $topicObject->text(<<'SPLOT');
    * Set BLEEGLE = frabbeque
 SPLOT
     $topicObject->save();
+    $topicObject->finish();
 
     $this->createNewFoswikiSession();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $this->{test_topic} );
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, $this->{test_topic} );
     $result = $topicObject->expandMacros("%VAR{\"VAR\"}%");
     $this->assert_equals( "", $result );
     $result = $topicObject->expandMacros(
@@ -53,6 +52,10 @@ SPLOT
 
     $result = $topicObject->expandMacros("%VAR%");
     $this->assert_equals( '', $result );
+
+    $topicObject->finish();
+
+    return;
 }
 
 1;
