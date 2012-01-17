@@ -2,10 +2,11 @@
 # Author: Crawford Currie
 
 package RESTTests;
+use strict;
+use warnings;
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
 use Foswiki;
 use Assert;
 use Foswiki::Func;
@@ -40,9 +41,8 @@ sub test_simple {
             action => ['rest'],
         });
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
-    $this->{session}->finish();
     $query->method('post');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->capture( $UI_FN, $this->{session} );
 }
 
@@ -57,9 +57,8 @@ sub test_endPoint {
             endPoint => 'this/that',
         });
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
-    $this->{session}->finish();
     $query->method('post');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     my ($text) = $this->capture( $UI_FN, $this->{session} );
     $this->assert_matches(qr#^Status: 302#m, $text);
     $this->assert_matches(qr#^Location:.*/this/that\s*$#m, $text);
@@ -76,9 +75,8 @@ sub test_http_allow {
             action => ['rest'],
         });
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
-    $this->{session}->finish();
     $query->method('POST');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     try {
         $this->capture( $UI_FN, $this->{session} );
     } catch Foswiki::EngineException with {
@@ -87,9 +85,8 @@ sub test_http_allow {
     } otherwise {
         $this->assert(0);
     };
-    $this->{session}->finish();
     $query->method('GET');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->capture( $UI_FN, $this->{session} );
 }
 
@@ -104,9 +101,8 @@ sub test_validate {
             action => ['rest'],
         });
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
-    $this->{session}->finish();
     $query->method('post');
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     # Make sure a request with no validation key is trapped
     try {
         $this->capture( $UI_FN, $this->{session} );
@@ -132,9 +128,8 @@ sub test_authenticate {
             action => ['rest'],
         });
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
-    $this->{session}->finish();
     $query->method('post');
-    $this->{session} = new Foswiki( undef, $query );
+    $this->createNewFoswikiSession( undef, $query );
     # Make sure a request with no authentication is trapped
     try {
         $this->capture( $UI_FN, $this->{session} );
@@ -146,8 +141,7 @@ sub test_authenticate {
         $this->assert(0);
     };
     # Make sure a request with session authentication is OK
-    $this->{session}->finish();
-    $this->{session} = new Foswiki( $this->{test_user_login}, $query );
+    $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->capture( $UI_FN, $this->{session} );
 }
 
