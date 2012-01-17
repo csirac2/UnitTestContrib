@@ -1,8 +1,8 @@
-use strict;
-
 # tests for the correct expansion of GROUPINFO
 
 package Fn_GROUPINFO;
+use strict;
+use warnings;
 
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
@@ -147,8 +147,7 @@ sub test_expandHiddenUser {
 sub test_expandHiddenUserAsAdmin {
     my $this = shift;
 
-    $this->{session}->finish();
-    $this->{session}          = new Foswiki( $Foswiki::cfg{AdminUserLogin} );
+    $this->createNewFoswikiSession( $Foswiki::cfg{AdminUserLogin} );
     $this->{test_topicObject} = Foswiki::Meta->new(
         $this->{session},    $this->{test_web},
         $this->{test_topic}, "BLEEGLE\n"
