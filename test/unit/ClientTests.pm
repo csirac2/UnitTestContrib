@@ -1,6 +1,6 @@
-use strict;
-
 package ClientTests;
+use strict;
+use warnings;
 
 # This is woefully incomplete, but it does at least check that
 # LoginManager.pm compiles okay.
@@ -69,8 +69,7 @@ sub set_up_for_verify {
     #print STDERR "\n------------- set_up -----------------\n";
     my $this = shift;
 
-    $this->{session}->finish() if $this->{session};
-    $this->{session} = new Foswiki( undef, new Unit::Request() );
+    $this->createNewFoswikiSession( undef, Unit::Request->new() );
     $this->assert( $Foswiki::cfg{TempfileDir}
           && -d $Foswiki::cfg{TempfileDir} );
     $Foswiki::cfg{UseClientSessions}  = 1;
@@ -117,11 +116,10 @@ sub verify_edit {
     my ( $query, $text );
 
     #close this Foswiki session - its using the wrong mapper and login
-    $this->{session}->finish();
 
     $query = new Unit::Request();
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
-    $this->{session} = new Foswiki( undef, $query );
+    $this->createNewFoswikiSession( undef, $query );
 
     $this->set_up_user();
     try {
@@ -136,9 +134,8 @@ sub verify_edit {
 
     $query = new Unit::Request();
     $query->path_info("/$this->{test_web}/$this->{test_topic}?breaklock=1");
-    $this->{session}->finish();
 
-    $this->{session} = new Foswiki( undef, $query );
+    $this->createNewFoswikiSession( undef, $query );
 
     try {
         ($text) = $this->capture( $EDIT_UI_FN, $this->{session} );
@@ -157,11 +154,10 @@ sub verify_edit {
 
     $query = new Unit::Request();
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
-    $this->{session}->finish();
 
     $this->annotate("new session using $userLogin\n");
 
-    $this->{session} = new Foswiki( $userLogin, $query );
+    $this->createNewFoswikiSession( $userLogin, $query );
 
 #clear the lease - one of the previous tests may have different usermapper & thus different user
     Foswiki::Func::setTopicEditLock( $this->{test_web}, $this->{test_topic},
@@ -174,7 +170,6 @@ sub verify_sudo_login {
     unless ( $this->{session}->getLoginManager()->can("login") ) {
         return;
     }
-    $this->{session}->finish();
     my $secret = "a big mole on my left buttock";
     my $crypted = crypt( $secret, "12" );
     $Foswiki::cfg{Password} = $crypted;
@@ -189,9 +184,8 @@ sub verify_sudo_login {
     );
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
 
-    $this->{session} = new Foswiki( undef, $query );
-    $this->{session}->getLoginManager()
-      ->login( $query, $this->{session} );
+    $this->createNewFoswikiSession( undef, $query );
+    $this->{session}->getLoginManager()->login( $query, $this->{session} );
     my $script = $Foswiki::cfg{LoginManager} =~ /Apache/ ? 'viewauth' : 'view';
     my $surly =
       $this->{session}
