@@ -1,12 +1,11 @@
-use strict;
-
 # tests for the correct expansion of REVINFO
 
 package Fn_REVINFO;
+use strict;
+use warnings;
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
 use Foswiki;
 use Error qw( :try );
 use Foswiki::Time;
@@ -249,8 +248,7 @@ sub test_42 {
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, "HappyPill",
         "   * Set ALLOWTOPICVIEW = CarlosCastenada\n" );
     $topicObject->save();
-    $this->{session}->finish();
-    $this->{session} = new Foswiki();
+    $this->createNewFoswikiSession();
     $topicObject =
       Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'GlumDrop' );
     my $ui = $topicObject->expandMacros(
