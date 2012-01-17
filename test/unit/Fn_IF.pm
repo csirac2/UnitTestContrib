@@ -1,8 +1,8 @@
 # tests for the correct expansion of IF
 
 package Fn_IF;
-
 use strict;
+use warnings;
 
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
@@ -1288,10 +1288,9 @@ PONG
             expect => "0"
         }
     );
-    $this->{session}->finish();
     my $request = new Unit::Request( {} );
     $request->path_info("/$this->{test_web}/$this->{test_topic}");
-    $this->{session} = new Foswiki( undef, $request );
+    $this->createNewFoswikiSession( undef, $request );
     $meta =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
         $this->{test_topic} );
