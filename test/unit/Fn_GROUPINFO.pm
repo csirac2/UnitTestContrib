@@ -11,9 +11,11 @@ use Foswiki;
 use Error qw( :try );
 
 sub new {
+    my ( $class, @args ) = @_;
+
     $Foswiki::cfg{Register}{AllowLoginName} = 1;
-    my $self = shift()->SUPER::new( 'GROUPINFO', @_ );
-    return $self;
+
+    return $class->SUPER::new( 'GROUPINFO', @args );
 }
 
 sub set_up {
@@ -58,6 +60,7 @@ sub set_up {
     $topText = $topicObject->text($topText);
     $topicObject->save();
 
+    return;
 }
 
 sub test_basic {
@@ -69,6 +72,8 @@ sub test_basic {
     $this->assert_matches( qr/\bNestingGroup\b/,         $ui );
     $this->assert_matches( qr/\bGroupWithHiddenGroup\b/, $ui );
     $this->assert_does_not_match( qr/\bHiddenGroup\b/, $ui );
+
+    return;
 }
 
 sub test_withName {
@@ -78,8 +83,10 @@ sub test_withName {
       $this->{test_topicObject}->expandMacros('%GROUPINFO{"GropeGroup"}%');
     $this->assert_matches( qr/\b$this->{users_web}.ScumBag\b/,   $ui );
     $this->assert_matches( qr/\b$this->{users_web}.WikiGuest\b/, $ui );
-    my @u = split( ',', $ui );
+    my @u = split( /,/, $ui );
     $this->assert( 2, scalar(@u) );
+
+    return;
 }
 
 sub test_noExpand {
@@ -94,8 +101,10 @@ sub test_noExpand {
       $this->{test_topicObject}->expandMacros('%GROUPINFO{"NestingGroup"}%');
     $this->assert_matches( qr/\b$this->{users_web}.ScumBag\b/,   $ui );
     $this->assert_matches( qr/\b$this->{users_web}.WikiGuest\b/, $ui );
-    my @u = split( ',', $ui );
+    my @u = split( /,/, $ui );
     $this->assert( 2, scalar(@u) );
+
+    return;
 }
 
 sub test_noExpandHidden {
@@ -106,8 +115,10 @@ sub test_noExpandHidden {
       ->expandMacros('%GROUPINFO{"GroupWithHiddenGroup" expand="off"}%');
     $this->assert_matches( qr/\b$this->{users_web}.WikiGuest\b/, $ui );
     $this->assert_does_not_match( qr/\b$this->{users_web}.HiddenGroup\b/, $ui );
-    my @u = split( ',', $ui );
+    my @u = split( /,/, $ui );
     $this->assert( 1, scalar(@u) );
+
+    return;
 }
 
 sub test_expandHidden {
@@ -126,8 +137,10 @@ sub test_expandHidden {
     $this->assert_matches( qr/\b$this->{users_web}.ScumBag\b/,
         $ui, 'ScumBag revealed' );
 
-    my @u = split( ',', $ui );
+    my @u = split( /,/, $ui );
     $this->assert( 1, scalar(@u) );
+
+    return;
 }
 
 sub test_expandHiddenUser {
@@ -140,8 +153,10 @@ sub test_expandHiddenUser {
         $ui, 'ScumBag missing from HiddenUserGroup' );
     $this->assert_does_not_match( qr/\b$this->{users_web}.HidemeGood\b/,
         $ui, 'HidemeGood revealed' );
-    my @u = split( ',', $ui );
+    my @u = split( /,/, $ui );
     $this->assert( 1, scalar(@u) );
+
+    return;
 }
 
 sub test_expandHiddenUserAsAdmin {
@@ -159,8 +174,10 @@ sub test_expandHiddenUserAsAdmin {
       ->expandMacros('%GROUPINFO{"HiddenUserGroup" expand="on"}%');
     $this->assert_matches( qr/$this->{users_web}.ScumBag/,    $ui );
     $this->assert_matches( qr/$this->{users_web}.HidemeGood/, $ui );
-    my @u = split( ',', $ui );
+    my @u = split( /,/, $ui );
     $this->assert( 2, scalar(@u) );
+
+    return;
 }
 
 sub test_formatted {
@@ -199,6 +216,8 @@ sub test_formatted {
 '%GROUPINFO{"GropeGroup" limit="1" limited="L" footer = "F" format="<$username>"}%'
       );
     $this->assert_matches( qr/^<\w+>LF$/, $ui );
+
+    return;
 }
 
 1;
