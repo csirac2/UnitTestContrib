@@ -3287,11 +3287,12 @@ GNURF
     # and that the order is fixed. So creating a buch of test topics
     my %testWebs = ( Main => 0, System => 10, Sandbox => 100 );
     while ( my ( $web, $delay ) = each %testWebs ) {
-        my $topicObject =
+        my $ltopicObject =
           Foswiki::Meta->new( $this->{session}, "$web", 'TheTopic', <<'CRUD');
 Just some dummy search topic.
 CRUD
-        $topicObject->save( forcedate => $delay );
+        $ltopicObject->save( forcedate => $delay );
+        $ltopicObject->finish();
     }
 
     $result = $this->{test_topicObject}->expandMacros( <<"GNURF" );
@@ -5611,10 +5612,12 @@ HERE
         $topicObj->text($metatext);
         $topicObj->save();
     }
-    while ( my ( $query, $expected ) = each %tests ) {
-        my $result = $this->_test_query( $query, "$this->{test_web}/LLB" );
+    while ( my ( $querysearch, $expected ) = each %tests ) {
+        my $result =
+          $this->_test_query( $querysearch, "$this->{test_web}/LLB" );
         $this->assert_str_equals( $expected, $result,
-            "Testing: '$query'\nExpected:'$expected'\nBut got: '$result'" );
+            "Testing: '$querysearch'\nExpected:'$expected'\nBut got: '$result'"
+        );
 
     }
 
