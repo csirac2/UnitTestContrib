@@ -4,14 +4,14 @@
 package RESTTests;
 use strict;
 use warnings;
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Foswiki;
 use Assert;
-use Foswiki::Func;
-use Foswiki::EngineException;
-use Carp;
+use Foswiki();
+use Foswiki::Func();
+use Foswiki::EngineException();
+use Carp();
 use Error ':try';
 
 our $UI_FN;
@@ -20,6 +20,8 @@ sub set_up {
     my $this = shift;
     $this->SUPER::set_up();
     $UI_FN ||= $this->getUIFn('rest');
+
+    return;
 }
 
 # A simple REST handler
@@ -29,6 +31,8 @@ sub rest_handler {
     Carp::confess $session unless $session->isa('Foswiki');
     Carp::confess $subject unless $subject eq 'RESTTests';
     Carp::confess $verb    unless $verb eq 'trial';
+
+    return;
 }
 
 # Simple no-options REST call
@@ -36,11 +40,13 @@ sub test_simple {
     my $this = shift;
     Foswiki::Func::registerRESTHandler( 'trial', \&rest_handler );
 
-    my $query = new Unit::Request( { action => ['rest'], } );
+    my $query = Unit::Request->new( { action => ['rest'], } );
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
     $query->method('post');
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->capture( $UI_FN, $this->{session} );
+
+    return;
 }
 
 # Test the (unused) endPoint parameter
@@ -48,7 +54,7 @@ sub test_endPoint {
     my $this = shift;
     Foswiki::Func::registerRESTHandler( 'trial', \&rest_handler );
 
-    my $query = new Unit::Request(
+    my $query = Unit::Request->new(
         {
             action   => ['rest'],
             endPoint => "$this->{test_web}/$this->{test_topic}",
@@ -137,6 +143,8 @@ sub test_endPoint_Illegal {
     otherwise {
         $this->assert(0);
     };
+
+    return;
 }
 
 # Test the http_allow option, to ensure it restricts the request methods
@@ -145,7 +153,7 @@ sub test_http_allow {
     Foswiki::Func::registerRESTHandler( 'trial', \&rest_handler,
         http_allow => 'GET' );
 
-    my $query = new Unit::Request( { action => ['rest'], } );
+    my $query = Unit::Request->new( { action => ['rest'], } );
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
     $query->method('POST');
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
@@ -162,6 +170,8 @@ sub test_http_allow {
     $query->method('GET');
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->capture( $UI_FN, $this->{session} );
+
+    return;
 }
 
 # Test checking the validation key
@@ -170,7 +180,7 @@ sub test_validate {
     Foswiki::Func::registerRESTHandler( 'trial', \&rest_handler,
         validate => 1 );
 
-    my $query = new Unit::Request( { action => ['rest'], } );
+    my $query = Unit::Request->new( { action => ['rest'], } );
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
     $query->method('post');
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
@@ -190,6 +200,8 @@ sub test_validate {
 
     # Make sure a request with validation is OK
     $this->captureWithKey( rest => $UI_FN, $this->{session} );
+
+    return;
 }
 
 # Test authentication requirement
@@ -198,7 +210,7 @@ sub test_authenticate {
     Foswiki::Func::registerRESTHandler( 'trial', \&rest_handler,
         authenticate => 1 );
 
-    my $query = new Unit::Request( { action => ['rest'], } );
+    my $query = Unit::Request->new( { action => ['rest'], } );
     $query->path_info( '/' . __PACKAGE__ . '/trial' );
     $query->method('post');
     $this->createNewFoswikiSession( undef, $query );
@@ -219,6 +231,8 @@ sub test_authenticate {
     # Make sure a request with session authentication is OK
     $this->createNewFoswikiSession( $this->{test_user_login}, $query );
     $this->capture( $UI_FN, $this->{session} );
+
+    return;
 }
 
 1;
