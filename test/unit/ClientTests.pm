@@ -5,14 +5,13 @@ use warnings;
 # This is woefully incomplete, but it does at least check that
 # LoginManager.pm compiles okay.
 
-use FoswikiFnTestCase;
+use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-use Unit::Request;
+use Foswiki();
+use Foswiki::LoginManager();
+use Unit::Request();
 use Error qw( :try );
-
-use Foswiki;
-use Foswiki::LoginManager;
 
 my $agent = $Foswiki::cfg{Register}{RegistrationAgentWikiName};
 my $userLogin;
