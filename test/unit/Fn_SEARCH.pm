@@ -1436,13 +1436,11 @@ HERE
         $text );
     $topicObject->save();
 
-    $this->{session}->finish();
     my $query = Unit::Request->new('');
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
 
-    $this->{session} = Foswiki->new( undef, $query );
+    $this->createNewFoswikiSession( undef, $query );
     $this->assert_str_equals( $this->{test_web}, $this->{session}->{webName} );
-    $Foswiki::Plugins::SESSION = $this->{session};
 
     $this->{test_topicObject} =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
@@ -2035,8 +2033,7 @@ sub verify_getTopicList {
             'WebIndex',          'WebLeftBar',
             'WebNotify',         'WebPreferences',
             'WebRss',            'WebSearch',
-            'WebSearchAdvanced',
-            'WebTopicList'
+            'WebSearchAdvanced', 'WebTopicList'
         ],
         '_default',
         {},
@@ -2057,8 +2054,7 @@ sub verify_getTopicList {
             'WebIndex',          'WebLeftBar',
             'WebNotify',         'WebPreferences',
             'WebRss',            'WebSearch',
-            'WebSearchAdvanced',
-            'WebTopicList'
+            'WebSearchAdvanced', 'WebTopicList'
         ],
         '_default',
         { includeTopics => 'Web*' },
@@ -4624,13 +4620,11 @@ HERE
         'QueryTopicThree', $text );
     $topicObject->save( forcedate => 1108413782, author => 'Gerald' );
 
-    $this->{session}->finish();
     my $query = Unit::Request->new('');
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
 
-    $this->{session} = Foswiki->new( undef, $query );
+    $this->createNewFoswikiSession( undef, $query );
     $this->assert_str_equals( $this->{test_web}, $this->{session}->{webName} );
-    $Foswiki::Plugins::SESSION = $this->{session};
 
     $this->{test_topicObject} =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
@@ -5486,12 +5480,10 @@ HERE
     );
     my $query = Unit::Request->new('');
 
-    $this->{session}->finish();
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
 
-    $this->{session} = Foswiki->new( $Foswiki::cfg{AdminUserLogin}, $query );
+    $this->createNewFoswikiSession( $Foswiki::cfg{AdminUserLogin}, $query );
     $this->assert_str_equals( $this->{test_web}, $this->{session}->{webName} );
-    $Foswiki::Plugins::SESSION = $this->{session};
     $this->{test_topicObject} =
       Foswiki::Meta->new( $this->{session}, $this->{test_web},
         $this->{test_topic} );
