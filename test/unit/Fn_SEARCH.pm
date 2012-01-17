@@ -51,26 +51,27 @@ sub set_up {
 
     my $timestamp = time();
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'OkTopic',
-        "BLEEGLE blah/matchme.blah" );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'OkTopic' );
+    $topicObject->text("BLEEGLE blah/matchme.blah");
     $topicObject->save( forcedate => $timestamp + 120 );
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'OkATopic',
-        "BLEEGLE dontmatchme.blah" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'OkATopic' );
+    $topicObject->text("BLEEGLE dontmatchme.blah");
     $topicObject->save( forcedate => $timestamp + 240 );
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'OkBTopic',
-        "BLEEGLE dont.matchmeblah" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'OkBTopic' );
+    $topicObject->text("BLEEGLE dont.matchmeblah");
     $topicObject->save( forcedate => $timestamp + 480 );
+    $topicObject->finish();
 
-    $topicObject = Foswiki::Meta->new(
-        $this->{session}, $this->{test_web},
-        'InvisibleTopic', "BLEEGLE dont.matchmeblah"
-    );
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'InvisibleTopic' );
+    $topicObject->text("BLEEGLE dont.matchmeblah");
     $topicObject->putKeyed( 'PREFERENCE',
         { name => 'ALLOWTOPICVIEW', value => 'OnlySuperman' } );
     $topicObject->save( forcedate => $timestamp + 480 );
+    $topicObject->finish();
 
     return;
 }
@@ -310,22 +311,26 @@ sub verify_word {
 sub verify_scope_all_type_word {
     my $this = shift;
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'VirtualBeer',
-        "There are alot of Virtual Beers to go around" );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'VirtualBeer' );
+    $topicObject->text("There are alot of Virtual Beers to go around");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'RealBeer',
-        "There are alot of Virtual Beer to go around" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'RealBeer' );
+    $topicObject->text("There are alot of Virtual Beer to go around");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'FamouslyBeered',
-        "Virtually speaking there could be alot of famous Beers" );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'FamouslyBeered' );
+    $topicObject->text(
+        "Virtually speaking there could be alot of famous Beers");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'VirtualLife',
-        "In a all life, I would expect to find fine Beer" );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'VirtualLife' );
+    $topicObject->text("In a all life, I would expect to find fine Beer");
     $topicObject->save();
+    $topicObject->finish();
 
     my $result =
       $this->{test_topicObject}->expandMacros(
@@ -345,22 +350,26 @@ EXPECT
 sub verify_scope_all_type_keyword {
     my $this = shift;
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'VirtualBeer',
-        "There are alot of Virtual Beers to go around" );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'VirtualBeer' );
+    $topicObject->text("There are alot of Virtual Beers to go around");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'RealBeer',
-        "There are alot of Virtual Beer to go around" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'RealBeer' );
+    $topicObject->text("There are alot of Virtual Beer to go around");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'FamouslyBeered',
-        "Virtually speaking there could be alot of famous Beers" );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'FamouslyBeered' );
+    $topicObject->text(
+        "Virtually speaking there could be alot of famous Beers");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'VirtualLife',
-        "In a all life, I would expect to find fine Beer" );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'VirtualLife' );
+    $topicObject->text("In a all life, I would expect to find fine Beer");
     $topicObject->save();
+    $topicObject->finish();
 
     my $result =
       $this->{test_topicObject}->expandMacros(
@@ -381,22 +390,26 @@ EXPECT
 sub verify_scope_all_type_literal {
     my $this = shift;
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'VirtualBeer',
-        "There are alot of Virtual Beers to go around" );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'VirtualBeer' );
+    $topicObject->text("There are alot of Virtual Beers to go around");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'RealBeer',
-        "There are alot of Virtual Beer to go around" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'RealBeer' );
+    $topicObject->text("There are alot of Virtual Beer to go around");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'FamouslyBeered',
-        "Virtually speaking there could be alot of famous Beers" );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'FamouslyBeered' );
+    $topicObject->text(
+        "Virtually speaking there could be alot of famous Beers");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'VirtualLife',
-        "In a all life, I would expect to find fine Beer" );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'VirtualLife' );
+    $topicObject->text("In a all life, I would expect to find fine Beer");
     $topicObject->save();
+    $topicObject->finish();
 
     my $result =
       $this->{test_topicObject}->expandMacros(
@@ -1200,10 +1213,11 @@ This text is fill in text which is there to ensure that the unique word below do
 %META:FIELD{name="Name" attributes="" title="Name" value="!AnnaAnchor"}%
 HERE
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        'FormattedSearchTopic1', $text );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'FormattedSearchTopic1' );
+    $topicObject->text($text);
     $topicObject->save();
+    $topicObject->finish();
 
     return;
 }
@@ -1409,10 +1423,11 @@ somethig after
 %META:TOPICMOVED{by="TopicUserMapping_guest" date="1176311052" from="Sandbox.TestETP" to="Sandbox.TestEarlyTimeProtocol"}%
 %META:FILEATTACHMENT{name="README" comment="Blah Blah" date="1157965062" size="5504"}%
 HERE
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'QueryTopic',
-        $text );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopic' );
+    $topicObject->text($text);
     $topicObject->save();
+    $topicObject->finish();
 
     $text = <<'HERE';
 %META:TOPICINFO{author="TopicUserMapping_guest" date="12" format="1.1" version="1.2"}%
@@ -1431,20 +1446,17 @@ third line
 %META:FILEATTACHMENT{name="porn.gif" comment="Cor" date="15062" size="15504"}%
 %META:FILEATTACHMENT{name="flib.xml" comment="Cor" date="1157965062" size="1"}%
 HERE
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'QueryTopicTwo',
-        $text );
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopicTwo' );
+    $topicObject->text($text);
     $topicObject->save();
+    $topicObject->finish();
 
     my $query = Unit::Request->new('');
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
 
     $this->createNewFoswikiSession( undef, $query );
     $this->assert_str_equals( $this->{test_web}, $this->{session}->{webName} );
-
-    $this->{test_topicObject} =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $this->{test_topic} );
 
     return;
 }
@@ -1725,10 +1737,11 @@ We have committed to take steps towards $vE reinventing our cyber-key players an
 %META:FIELD{name="FieldD" attributes="" title="Banother Field" value="$vD"}%
 %META:FIELD{name="FieldE" attributes="" title="Banother Field" value="$vE"}%
 HERE
-        my $topicObject =
-          Foswiki::Meta->new( $this->{session}, $this->{test_web},
-            "QueryTopic$n", $text );
+        my ($topicObject) =
+          Foswiki::Func::readTopic( $this->{test_web}, "QueryTopic$n", );
+        $topicObject->text($text);
         $topicObject->save();
+        $topicObject->finish();
     }
     require Benchmark;
 
@@ -1783,19 +1796,19 @@ sub verify_likeQuery {
       ->expandMacros( '%SEARCH{"text ~ \'*QueryTopicTwo*\'" ' . $stdCrap );
     $this->assert_str_equals( 'QueryTopicTwo', $result );
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        'QueryTopicTwo' );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopicTwo' );
     $result =
       $topicObject->expandMacros( '%SEARCH{"text ~ \'*SMONG*\'" ' . $stdCrap );
     $this->assert_str_equals( 'QueryTopicTwo', $result );
 
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        'QueryTopicTwo' );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopicTwo' );
     $result = $topicObject->expandMacros(
         '%SEARCH{"text ~ \'*QueryTopicTwo*\'" ' . $stdCrap );
     $this->assert_str_equals( 'QueryTopicTwo', $result );
+    $topicObject->finish();
 
     return;
 }
@@ -1819,32 +1832,32 @@ sub verify_likeQuery2 {
           . $stdCrap );
     $this->assert_str_equals( 'QueryTopicTwo', $result );
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        'QueryTopicTwo' );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopicTwo' );
     $result =
       $topicObject->expandMacros( '%SEARCH{"text ~ \'*SMONG*\'" web="'
           . $this->{test_web} . '" '
           . $stdCrap );
     $this->assert_str_equals( 'QueryTopicTwo', $result );
 
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        'QueryTopicTwo' );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopicTwo' );
     $result =
       $topicObject->expandMacros( '%SEARCH{"text ~ \'*QueryTopicTwo*\'" web="'
           . $this->{test_web} . '" '
           . $stdCrap );
     $this->assert_str_equals( 'QueryTopicTwo', $result );
 
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        'QueryTopicTwo' );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopicTwo' );
     $result =
       $topicObject->expandMacros( '%SEARCH{"text ~ \'*Notinthetopics*\'" web="'
           . $this->{test_web} . '" '
           . $stdCrap );
     $this->assert_str_equals( '', $result );
+    $topicObject->finish();
 
     $result =
       $this->{test_topicObject}
@@ -1933,14 +1946,15 @@ sub test_validatepattern {
 sub test_formatOfLinks {
     my $this = shift;
 
-    my $topicObject = Foswiki::Meta->new(
-        $this->{session},
-        $this->{test_web}, 'Item977', "---+ Apache
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'Item977' );
+    $topicObject->text(<<'HERE');
+---+ Apache
 
 Apache is the [[http://www.apache.org/httpd/][well known web server]].
-"
-    );
+HERE
     $topicObject->save();
+    $topicObject->finish();
 
     my $result =
       $this->{test_topicObject}->expandMacros(
@@ -2005,6 +2019,7 @@ sub _getTopicList {
         next if ( $t eq 'InvisibleTopic' );    #and user != admin or...
         push( @topicList, $t );
     }
+    $webObject->finish();
 
     my $l1 = join( ',', @{$expected} );
     my $l2 = join( ',', @topicList );
@@ -2316,17 +2331,18 @@ sub verify_casesensitivesetting {
 sub verify_Item6082_Search {
     my $this = shift;
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'TestForm',
-        <<'FORM');
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'TestForm' );
+    $topicObject->text(<<'FORM');
 | *Name*         | *Type* | *Size* | *Value*   | *Tooltip message* | *Attributes* |
 | Why | text | 32 | | Mandatory field | M |
 | Ecks | select | 1 | %SEARCH{"TestForm.Ecks~'Blah*'" type="query" order="topic" separator="," format="$topic;$formfield(Ecks)" nonoise="on"}% | | |
 FORM
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'SplodgeOne',
-        <<'FORM');
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'SplodgeOne' );
+    $topicObject->text( <<'FORM');
 %META:FORM{name="TestForm"}%
 %META:FIELD{name="Ecks" attributes="" title="X" value="Blah"}%
 FORM
@@ -2337,6 +2353,7 @@ FORM
     );
     my $expected = 'SplodgeOne;Blah';
     $this->assert_str_equals( $expected, $actual );
+    $topicObject->finish();
 
     return;
 }
@@ -2344,17 +2361,18 @@ FORM
 sub verify_quotemeta {
     my $this = shift;
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'TestForm',
-        <<'FORM');
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'TestForm' );
+    $topicObject->text( <<'FORM');
 | *Name*         | *Type* | *Size* | *Value*   | *Tooltip message* | *Attributes* |
 | Why | text | 32 | | Mandatory field | M |
 | Ecks | select | 1 | %SEARCH{"TestForm.Ecks~'Blah*'" type="query" order="topic" separator="," format="$topic;$formfield(Ecks)" nonoise="on"}% | | |
 FORM
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'SplodgeOne',
-        <<'FORM');
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'SplodgeOne' );
+    $topicObject->text(<<'FORM');
 %META:FORM{name="TestForm"}%
 %META:FIELD{name="Ecks" attributes="" title="X" value="Blah"}%
 FORM
@@ -2365,6 +2383,7 @@ FORM
     );
     my $expected = 'SplodgeOne;Blah';
     $this->assert_str_equals( $expected, $actual );
+    $topicObject->finish();
 
     return;
 }
@@ -3028,33 +3047,39 @@ sub test_groupby_none_using_subwebs {
     my $webObject =
       Foswiki::Meta->new( $this->{session}, "$this->{test_web}/A" );
     $webObject->populateNewWeb();
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, "$this->{test_web}/A", 'TheTopic',
-        <<'CRUD');
+    $webObject->finish();
+    my ($topicObject) =
+      Foswiki::Func::readTopic( "$this->{test_web}/A", 'TheTopic' );
+    $topicObject->text( <<'CRUD');
 %META:FORM{name="TestForm"}%
 %META:FIELD{name="Order" title="Order" value="3"}%
 CRUD
     $topicObject->save( forcedate => 1000 );
+    $topicObject->finish();
 
     $webObject = Foswiki::Meta->new( $this->{session}, "$this->{test_web}/B" );
     $webObject->populateNewWeb();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, "$this->{test_web}/B", 'TheTopic',
-        <<'CRUD');
+    $webObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( "$this->{test_web}/B", 'TheTopic' );
+    $topicObject->text( <<'CRUD');
 %META:FORM{name="TestForm"}%
 %META:FIELD{name="Order" title="Order" value="1"}%
 CRUD
     $topicObject->save( forcedate => 100 );
+    $topicObject->finish();
 
     $webObject = Foswiki::Meta->new( $this->{session}, "$this->{test_web}/C" );
     $webObject->populateNewWeb();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, "$this->{test_web}/C", 'TheTopic',
-        <<'CRUD');
+    $webObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( "$this->{test_web}/C", 'TheTopic' );
+    $topicObject->text( <<'CRUD');
 %META:FORM{name="TestForm"}%
 %META:FIELD{name="Order" title="Order" value="2"}%
 CRUD
     $topicObject->save( forcedate => 500 );
+    $topicObject->finish();
     my $result;
 
     #order by formfield, with groupby=none
@@ -3186,8 +3211,8 @@ GNURF
     # and that the order is fixed. So creating a buch of test topics
     my %testWebs = ( Main => 0, System => 10, Sandbox => 100 );
     while ( my ( $web, $delay ) = each %testWebs ) {
-        my $ltopicObject =
-          Foswiki::Meta->new( $this->{session}, "$web", 'TheTopic', <<'CRUD');
+        my ($ltopicObject) = Foswiki::Func::readTopic( "$web", 'TheTopic' );
+        $ltopicObject->text(<<'CRUD');
 Just some dummy search topic.
 CRUD
         $ltopicObject->save( forcedate => $delay );
@@ -3258,11 +3283,11 @@ CRUD
     # Now we create the WikiGuest user topic, to test both outputs
     my $session = $this->{session};
     if ( !$session->topicExists( 'TemporarySEARCHUsersWeb', 'WikiGuest' ) ) {
-        my $userTopic = Foswiki::Meta->new(
-            $session,    'TemporarySEARCHUsersWeb',
-            'WikiGuest', 'Just this poor old WikiGuest'
-        );
+        my ($userTopic) =
+          Foswiki::Func::readTopic( 'TemporarySEARCHUsersWeb', 'WikiGuest' );
+        $userTopic->text('Just this poor old WikiGuest');
         $userTopic->save();
+        $userTopic->finish();
     }
     $this->assert(
         $session->topicExists( 'TemporarySEARCHUsersWeb', 'WikiGuest' ),
@@ -3700,10 +3725,11 @@ sub verify_stop_words_search_word {
 
     my $TEST_TEXT  = "xxx Shamira";
     my $TEST_TOPIC = 'StopWordTestTopic';
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, $TEST_TOPIC,
-        $TEST_TEXT );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, $TEST_TOPIC );
+    $topicObject->text($TEST_TEXT);
     $topicObject->save();
+    $topicObject->finish();
 
     my $result =
       $this->{test_topicObject}->expandMacros(
@@ -3751,10 +3777,11 @@ sub createSummaryTestTopic {
 
 	Alan says: 'Oh yes; I knew I'd seen them somewhere before! But how do I know I won't go mad and do something to you? I just thought of something, just then.' Alan is now very agitated. 'It makes my blood boil the way analysts never defend themselves when they are attacked in the press. You hear one slander after another about Freud and psychoanalysis, and what do your lot do? Nothing!'";
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, $topicName,
-        $TEST_SUMMARY_TEXT );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, $topicName );
+    $topicObject->text($TEST_SUMMARY_TEXT);
     $topicObject->save();
+    $topicObject->finish();
 
     return;
 }
@@ -3995,11 +4022,12 @@ sub verify_date_param {
 A Symbol Interpreted In American Architecture. Meta-Physics Of Marxism & Poverty In The American Landscape. Exploration Of Crime In Mexican Sculptures: A Study Seen In American Literature. Brief Survey Of Suicide In Italian Art: The Big Picture. Special Studies In Bisexual Female Architecture. Brief Survey Of Suicide In Polytheistic Literature: Analysis, Analysis, and Critical Thinking. Radical Paganism: Modern Theories. Liberal Mexican Religion In The Modern Age. 
 
 HERE
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, "VeryOldTopic",
-        $text );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, "VeryOldTopic" );
+    $topicObject->text($text);
     my $rev = $topicObject->save( forcedate => 86420 ); # > 86400, see Item10389
     $this->assert_num_equals( 1, $rev );
+    $topicObject->finish();
 
     #TODO: sadly, the core Handlers don't set the filedate
     # even though they could
@@ -4025,7 +4053,6 @@ RESULT
 sub verify_nl_in_result {
     my $this = shift;
     my $text = <<'HERE';
-%META:TOPICINFO{author="TopicUserMapping_guest" date="1" format="1.1" version="1.2"}%
 Radical Meta-Physics
 Marxism
 Crime
@@ -4033,10 +4060,11 @@ Suicide
 Paganism.
 %META:FIELD{name="Name" attributes="" title="Name" value="Meta-Physics%0aMarxism%0aCrime%0aSuicide%0aPaganism."}%
 HERE
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, "OffColour",
-        $text );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, "OffColour" );
+    $topicObject->text($text);
     $topicObject->save();
+    $topicObject->finish();
 
     my $result;
 
@@ -4546,9 +4574,9 @@ HERE
 
 #    $this->{twiki}->{store}->saveTopic( 'simon',
 #        $this->{test_web}, 'QueryTopic', $text, undef, {forcedate=>1178612772} );
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'QueryTopic',
-        $text );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopic' );
+    $topicObject->text($text);
     $topicObject->save(
         forcedate        => 1178412772,
         author           => 'admin',
@@ -4559,6 +4587,7 @@ HERE
         author           => 'simon',
         forcenewrevision => 1
     );
+    $topicObject->finish();
 
     $text = <<'HERE';
 %META:TOPICINFO{author="BaseUserMapping_666" date="1108412772" format="1.1" version="1.2"}%
@@ -4581,9 +4610,9 @@ HERE
 
     #$this->{twiki}->{store}->saveTopic( 'admin',
     #    $this->{test_web}, 'QueryTopicTwo', $text, undef, {forcedate=>12} );
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'QueryTopicTwo',
-        $text );
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopicTwo' );
+    $topicObject->text($text);
     $topicObject->save(
         forcedate        => 1108312772,
         author           => 'admin',
@@ -4594,6 +4623,7 @@ HERE
         author           => 'simon',
         forcenewrevision => 1
     );
+    $topicObject->finish();
 
     $text = <<'HERE';
 %META:TOPICINFO{author="TopicUserMapping_Gerald" date="1108412782" format="1.1" version="1.2"}%
@@ -4616,20 +4646,17 @@ HERE
 
     #$this->{twiki}->{store}->saveTopic( 'Gerald',
     #    $this->{test_web}, 'QueryTopicThree', $text, undef, {forcedate=>14} );
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        'QueryTopicThree', $text );
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'QueryTopicThree' );
+    $topicObject->text($text);
     $topicObject->save( forcedate => 1108413782, author => 'Gerald' );
+    $topicObject->finish();
 
     my $query = Unit::Request->new('');
     $query->path_info("/$this->{test_web}/$this->{test_topic}");
 
     $this->createNewFoswikiSession( undef, $query );
     $this->assert_str_equals( $this->{test_web}, $this->{session}->{webName} );
-
-    $this->{test_topicObject} =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $this->{test_topic} );
 
     return;
 }
@@ -4968,9 +4995,9 @@ sub test_format_tokens {
 %META:TOPICPARENT{name="WebHome"}%
 %META:FIELD{name="Option" attributes="" title="Some option" value="Some long test I can truncate later"}%
 METADATA
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, $testTopic,
-        "---++ $header\n$body\n$meta\n" );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, $testTopic );
+    $topicObject->text("---++ $header\n$body\n$meta\n");
     $topicObject->save();
 
     my $testUser        = 'WikiGuest';
@@ -5057,6 +5084,7 @@ METADATA
                 "Expansion of SEARCH token $token failed!\n"
               . "Expected:'$expected'\n But got:'$result'\n" );
     }
+    $topicObject->finish();
 
     return;
 }
@@ -5071,9 +5099,8 @@ sub test_format_percent_tokens {
       . 'expandvariables="on" nonoise="on" format="$pattern(.*?begin (.*?) end.*)"}%';
 
     Foswiki::Func::createWeb($testWeb);
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $testWeb, $testTopic,
-        "begin $body end\n" );
+    my ($topicObject) = Foswiki::Func::readTopic( $testWeb, $testTopic );
+    $topicObject->text("begin $body end\n");
     $topicObject->save();
     my $expected     = $topicObject->expandMacros($body);
     my $expectedFail = $expected;
@@ -5096,6 +5123,7 @@ sub test_format_percent_tokens {
     $this->assert_equals( $expectedFail, $result,
             "Expansion of SEARCH failed remotely (expandvariables=\"off\")!\n"
           . "Expected:'$expectedFail'\n But got:'$result'\n" );
+    $topicObject->finish();
     return;
 }
 
@@ -5118,34 +5146,38 @@ sub test_search_scope_topic {
 sub test_minus_scope_all {
     my $this = shift;
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'VirtualBeer',
-        "There are alot of Virtual Beers to go around" );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'VirtualBeer' );
+    $topicObject->text("There are alot of Virtual Beers to go around");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'RealBeer',
-        "There are alot of Virtual Beer to go around" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'RealBeer' );
+    $topicObject->text("There are alot of Virtual Beer to go around");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'FamouslyBeered',
-        "Virtually speaking there could be alot of famous Beers" );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'FamouslyBeered' );
+    $topicObject->text(
+        "Virtually speaking there could be alot of famous Beers");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'VirtualLife',
-        "In a all life, I would expect to find fine Beer" );
+    $topicObject->finish();
+    ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'VirtualLife' );
+    $topicObject->text("In a all life, I would expect to find fine Beer");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'NoLife',
-        "In a all life, I would expect to find fine Beer" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'NoLife' );
+    $topicObject->text("In a all life, I would expect to find fine Beer");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'NoBeer',
-        "In a all life, I would expect to find fine Beer" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'NoBeer' );
+    $topicObject->text("In a all life, I would expect to find fine Beer");
     $topicObject->save();
-    $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'SomeBeer',
-        "In a all life, I would expect to find fine Wine" );
+    $topicObject->finish();
+    ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'SomeBeer' );
+    $topicObject->text("In a all life, I would expect to find fine Wine");
     $topicObject->save();
+    $topicObject->finish();
 
     my $result =
       $this->{test_topicObject}->expandMacros(
@@ -5230,11 +5262,11 @@ sub verify_Item10398 {
 
     $this->set_up_for_queries();
 
-    my $topicObject = Foswiki::Meta->new(
-        $this->{session},    $this->{test_web},
-        'Trash.MainBobTest', "BLEEGLE blah/matchme.blah"
-    );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'Trash.MainBobTest' );
+    $topicObject->text("BLEEGLE blah/matchme.blah");
     $topicObject->save();
+    $topicObject->finish();
 
     my $result =
       $this->{test_topicObject}
@@ -5266,9 +5298,9 @@ sub verify_Item10491 {
 
     #$this->set_up_for_queries();
 
-    my $topicObject =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web}, 'Item10491',
-        <<'TOPICTEXT' );
+    my ($topicObject) =
+      Foswiki::Func::readTopic( $this->{test_web}, 'Item10491' );
+    $topicObject->text(<<'TOPICTEXT' );
 Search on Foswiki.org has been showing some signs of corruption.   The topic Tasks/Item968 appeared to be related, however it can be created  From IRC:
 
  SomeString.txt
@@ -5316,6 +5348,7 @@ I'm able to duplicate the issue locally on a 1.1.3 checkout (two webs returned w
 %COMMENT%
 TOPICTEXT
     $topicObject->save();
+    $topicObject->finish();
 
     my $result =
       $this->{test_topicObject}
@@ -5485,9 +5518,6 @@ HERE
 
     $this->createNewFoswikiSession( $Foswiki::cfg{AdminUserLogin}, $query );
     $this->assert_str_equals( $this->{test_web}, $this->{session}->{webName} );
-    $this->{test_topicObject} =
-      Foswiki::Meta->new( $this->{session}, $this->{test_web},
-        $this->{test_topic} );
     require Foswiki::Address;
     while ( my ( $fwaddress, $metatext ) = each %topics ) {
         my $addrObj = Foswiki::Address->new( string => $fwaddress );
@@ -5510,6 +5540,7 @@ HERE
           Foswiki::Func::readTopic( $addrObj->web(), $addrObj->topic() );
         $topicObj->text($metatext);
         $topicObj->save();
+        $topicObj->finish();
     }
     while ( my ( $querysearch, $expected ) = each %tests ) {
         my $result =
