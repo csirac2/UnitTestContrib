@@ -1,5 +1,3 @@
-use strict;
-
 # Authors: Crawford Currie http://wikiring.com
 #
 # Make sure that all the right plugin handlers are called in the
@@ -16,10 +14,11 @@ use strict;
 # start coding....
 #
 package PluginHandlerTests;
+use strict;
+use warnings;
 use FoswikiFnTestCase;
 our @ISA = qw( FoswikiFnTestCase );
 
-use strict;
 use Foswiki;
 use Error qw( :try );
 use Foswiki::Plugin;
@@ -119,7 +118,7 @@ EOF
     $Foswiki::cfg{Plugins}{ $this->{plugin_name} }{Enabled} = 1;
     $Foswiki::cfg{Plugins}{ $this->{plugin_name} }{Module} =
       "Foswiki::Plugins::$this->{plugin_name}";
-    $this->createNewFoswikiSession();
+    $this->createNewFoswikiSession();    # default user
     eval "\$Foswiki::Plugins::$this->{plugin_name}::tester = \$this;";
     $this->checkCalls( 1, 'initPlugin' );
     $Foswiki::Plugins::SESSION = $this->{session};
@@ -661,8 +660,9 @@ sub finishPlugin {
 }
 HERE
 
-    $this->createNewFoswikiSession();
+    $this->finishFoswikiSession();
     $this->checkCalls( 1, 'finishPlugin' );
+    $this->createNewFoswikiSession();
 }
 
 1;
