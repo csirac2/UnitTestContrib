@@ -21,6 +21,7 @@ our @ISA = qw( FoswikiFnTestCase );
 
 use Foswiki();
 use Error qw( :try );
+use Foswiki::Func();
 use Foswiki::Plugin();
 use Symbol qw(delete_package);
 
@@ -62,6 +63,7 @@ sub set_up {
     $this->{code_root} = "$found/Foswiki/Plugins/";
     my $webObject = Foswiki::Meta->new( $this->{session}, $systemWeb );
     $webObject->populateNewWeb( $Foswiki::cfg{SystemWebName} );
+    $webObject->finish();
     $Foswiki::cfg{SystemWebName} = $systemWeb;
     $Foswiki::cfg{Plugins}{WebSearchPath} = $systemWeb;
 
@@ -110,12 +112,14 @@ HERE
     print $F $code;
     $this->assert( close($F) );
     try {
-        my $topicObject =
-          Foswiki::Meta->new( $this->{session}, $Foswiki::cfg{SystemWebName},
-            $this->{plugin_name}, <<'EOF');
+        my ($topicObject) =
+          Foswiki::Func::readTopic( $Foswiki::cfg{SystemWebName},
+            $this->{plugin_name} );
+        $topicObject->text(<<'EOF');
    * Set PLUGINVAR = Blah
 EOF
         $topicObject->save();
+        $topicObject->finish();
     }
     catch Foswiki::AccessControlException with {
         $this->assert( 0, shift->stringify() );
@@ -148,8 +152,7 @@ sub test_saveHandlers {
 
     my $user = $this->{session}->{user};
     $this->assert_not_null($user);
-    my $topicObject =
-      Foswiki::Meta->load( $this->{session}, $this->{test_web}, 'Tropic' );
+    my ($topicObject) = Foswiki::Func::readTopic( $this->{test_web}, 'Tropic' );
     my $text = $topicObject->text() || '';
     $text =~ s/^\s*\* Set BLAH =.*$//gm;
     $text .= "\n\t* Set BLAH = BEFORE\n";
@@ -164,6 +167,7 @@ sub test_saveHandlers {
     catch Error::Simple with {
         $this->assert( 0, shift->stringify() || '' );
     };
+    $topicObject->finish();
 
     my $q = Foswiki::Func::getRequestObject();
     $this->createNewFoswikiSession( $Foswiki::cfg{GuestUserLogin}, $q );
@@ -211,16 +215,22 @@ HERE
     # Test to ensure that the before and after save handlers are both called,
     # and that modifications made to the text are actaully written to the topic file
     my $meta = Foswiki::Meta->new( $this->{session}, $this->{test_web}, "Tropic", $text );
+
+    # Crawford changed from Meta->load to Meta->new (above) in Foswikirev:13781;
+    # so I'm holding off on eradicating the above Foswiki::Meta usage until I
+    # better understand why
+    # my ($meta) = Foswiki::Func::readTopic( $this->{test_web}, "Tropic" );
     $meta->put( 'WIBBLE', { wibble => 'Wibble' } );
     $meta->save();
+    $meta->finish();
     $this->checkCalls( 1, 'beforeSaveHandler' );
     $this->checkCalls( 1, 'afterSaveHandler' );
 
-    my $newMeta =
-      Foswiki::Meta->load( $this->{session}, $this->{test_web}, "Tropic" );
+    my ($newMeta) = Foswiki::Func::readTopic( $this->{test_web}, "Tropic" );
     $this->assert_matches( qr\B4SAVE\, $newMeta->text() );
     $this->assert_str_equals( 'Wibble', $newMeta->get('WIBBLE')->{wibble} );
     $this->assert_str_equals( "AFTER",  $newMeta->getPreference("BLAH") );
+    $newMeta->finish();
 
     #SMELL: Without this call, getPreferences returns BEFORE
     Foswiki::Func::pushTopicContext( $this->{test_web}, 'Tropic' );
@@ -274,9 +284,10 @@ HERE
 
     # Crude test to ensure all handlers are called, and in the right order.
     # Doesn't verify that they are called at the right time
-    my $meta = Foswiki::Meta->new( $this->{session}, "Werb", "Tropic" );
+    my ($meta) = Foswiki::Func::readTopic( "Werb", "Tropic" );
     $meta->put( 'WIBBLE', { wibble => 'Wibble' } );
     Foswiki::Func::expandCommonVariables( "Zero", "Tropic", "Werb", $meta );
+    $meta->finish();
     $this->checkCalls( 1, 'beforeCommonTagsHandler' );
     $this->checkCalls( 1, 'commonTagsHandler' );
     $this->checkCalls( 1, 'afterCommonTagsHandler' );
