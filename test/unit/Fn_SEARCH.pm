@@ -426,7 +426,22 @@ sub verify_default_alpha_order_query {
                 format="$web.$topic"
         }%'
     );
-    my $expected = <<'EXPECT';
+    my $expected;
+    if ( $this->check_dependency('Foswiki,<,1.2') ) {
+        $expected = <<'EXPECT';
+System.WebHome
+System.WebPreferences
+System.WebSearch
+Main.WebHome
+Main.WebPreferences
+Main.WebSearch
+Sandbox.WebHome
+Sandbox.WebPreferences
+Sandbox.WebSearch
+EXPECT
+    }
+    else {
+        $expected = <<'EXPECT';
 Main.WebHome
 Main.WebPreferences
 Main.WebSearch
@@ -437,6 +452,7 @@ System.WebHome
 System.WebPreferences
 System.WebSearch
 EXPECT
+    }
     $expected =~ s/\n$//s;
     $this->assert_str_equals( $expected, $result );
 
@@ -455,7 +471,22 @@ sub verify_default_alpha_order_search {
                 format="$web.$topic"
         }%'
     );
-    my $expected = <<'EXPECT';
+    my $expected;
+    if ( $this->check_dependency('Foswiki,<,1.2') ) {
+        $expected = <<'EXPECT';
+System.WebHome
+System.WebPreferences
+System.WebSearch
+Main.WebHome
+Main.WebPreferences
+Main.WebSearch
+Sandbox.WebHome
+Sandbox.WebPreferences
+Sandbox.WebSearch
+EXPECT
+    }
+    else {
+        $expected = <<'EXPECT';
 Main.WebHome
 Main.WebPreferences
 Main.WebSearch
@@ -466,6 +497,7 @@ System.WebHome
 System.WebPreferences
 System.WebSearch
 EXPECT
+    }
     $expected =~ s/\n$//s;
     $this->assert_str_equals( $expected, $result );
 
@@ -1581,7 +1613,7 @@ sub verify_formQuery2 {
     my $result =
       $this->{test_topicObject}
       ->expandMacros( '%SEARCH{"TestForm"' . $stdCrap );
-    if ( $this->check_dependency( 'Foswiki,<,1.2' ) ) {
+    if ( $this->check_dependency('Foswiki,<,1.2') ) {
         $this->assert_str_equals( 'QueryTopic', $result );
     }
     else {
@@ -2086,7 +2118,9 @@ Apache is the [[http://www.apache.org/httpd/][well known web server]].
 }
 
 sub _getTopicList {
-    my ( $this, $expected, $web, $options, $sadness ) = @_;
+    my ( $this, $web, $options, $sadness, $default_expected, %expected_list ) =
+      @_;
+    my $expected;
 
     #    my $options = {
     #        casesensitive  => $caseSensitive,
@@ -2095,6 +2129,15 @@ sub _getTopicList {
     #        excludeTopics  => $excludeTopic,
     #    };
 
+    foreach my $dep_str ( sort( keys %expected_list ) ) {
+        if ( !$expected && $this->check_dependency($dep_str) ) {
+            $expected = $expected_list{$dep_str};
+        }
+    }
+    if ( !$expected ) {
+        $expected = $default_expected;
+        $this->assert_str_equals( 'ARRAY', ref($expected) );
+    }
     my $webObject = Foswiki::Meta->new( $this->{session}, $web );
 
     # Run the search on topics in this web
@@ -2120,16 +2163,19 @@ sub verify_getTopicList {
 
     #no topics specified..
     $this->_getTopicList(
+        $this->{test_web},
+        {},
+        'no filters, all topics in test_web',
         [
             'OkATopic', 'OkBTopic',
             'OkTopic',  'TestTopicSEARCH',
             'WebPreferences'
         ],
-        $this->{test_web},
-        {},
-        'no filters, all topics in test_web'
     );
     $this->_getTopicList(
+        '_default',
+        {},
+        'no filters, all topics in test_web',
         [
             'WebAtom',           'WebChanges',
             'WebCreateNewTopic', 'WebHome',
@@ -2138,19 +2184,19 @@ sub verify_getTopicList {
             'WebRss',            'WebSearch',
             'WebSearchAdvanced', 'WebTopicList'
         ],
-        '_default',
-        {},
-        'no filters, all topics in test_web'
     );
 
     #use wildcards
     $this->_getTopicList(
-        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
         $this->{test_web},
         { includeTopics => 'Ok*' },
-        'comma separated list'
+        'comma separated list',
+        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
     );
     $this->_getTopicList(
+        '_default',
+        { includeTopics => 'Web*' },
+        'no filters, all topics in test_web',
         [
             'WebAtom',           'WebChanges',
             'WebCreateNewTopic', 'WebHome',
@@ -2159,33 +2205,35 @@ sub verify_getTopicList {
             'WebRss',            'WebSearch',
             'WebSearchAdvanced', 'WebTopicList'
         ],
-        '_default',
-        { includeTopics => 'Web*' },
-        'no filters, all topics in test_web'
     );
 
     #comma separated list specifed for inclusion
     $this->_getTopicList(
-        [ 'OkTopic', 'TestTopicSEARCH' ],
         $this->{test_web},
         { includeTopics => 'TestTopicSEARCH,OkTopic,NoSuchTopic' },
-        'comma separated list'
+        'comma separated list',
+        [ 'OkTopic', 'TestTopicSEARCH' ],
+        'Foswiki,<,1.2' => [ 'TestTopicSEARCH', 'OkTopic' ],
     );
     $this->_getTopicList(
-        [ 'WebCreateNewTopic', 'WebTopicList' ],
         '_default',
         { includeTopics => 'WebTopicList, WebCreateNewTopic, NoSuchTopic' },
-        'no filters, all topics in test_web'
+        'no filters, all topics in test_web',
+        [ 'WebCreateNewTopic', 'WebTopicList' ],
+        'Foswiki,<,1.2' => [ 'WebTopicList', 'WebCreateNewTopic' ],
     );
 
     #excludes
     $this->_getTopicList(
-        [ 'OkATopic', 'OkTopic', 'TestTopicSEARCH', 'WebPreferences' ],
         $this->{test_web},
         { excludeTopics => 'NoSuchTopic,OkBTopic' },
-        'no filters, all topics in test_web'
+        'no filters, all topics in test_web',
+        [ 'OkATopic', 'OkTopic', 'TestTopicSEARCH', 'WebPreferences' ],
     );
     $this->_getTopicList(
+        '_default',
+        { excludeTopics => 'WebSearch' },
+        'no filters, all topics in test_web',
         [
             'WebAtom',           'WebChanges',
             'WebCreateNewTopic', 'WebHome',
@@ -2194,45 +2242,42 @@ sub verify_getTopicList {
             'WebRss',            'WebSearchAdvanced',
             'WebTopicList'
         ],
-        '_default',
-        { excludeTopics => 'WebSearch' },
-        'no filters, all topics in test_web'
     );
 
     #Talk about missing alot of tests
     $this->_getTopicList(
+        $this->{test_web},
+        { includeTopics => '*' },
+        'all topics, using wildcard',
         [
             'OkATopic', 'OkBTopic',
             'OkTopic',  'TestTopicSEARCH',
             'WebPreferences'
         ],
-        $this->{test_web},
-        { includeTopics => '*' },
-        'all topics, using wildcard'
     );
     $this->_getTopicList(
-        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
         $this->{test_web},
         { includeTopics => 'Ok*' },
-        'Ok* topics, using wildcard'
+        'Ok* topics, using wildcard',
+        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
     );
     $this->_getTopicList(
-        [],
         $this->{test_web},
         {
             includeTopics => 'ok*',
             casesensitive => 1
         },
-        'case sensitive ok* topics, using wildcard'
+        'case sensitive ok* topics, using wildcard',
+        [],
     );
     $this->_getTopicList(
-        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
         $this->{test_web},
         {
             includeTopics => 'ok*',
             casesensitive => 0
         },
-        'case insensitive ok* topics, using wildcard'
+        'case insensitive ok* topics, using wildcard',
+        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
     );
 
     if ( File::Spec->case_tolerant() ) {
@@ -2242,101 +2287,100 @@ sub verify_getTopicList {
 
         # this test won't work on Mac OS X or windows.
         $this->_getTopicList(
-            [],
             $this->{test_web},
             {
                 includeTopics => 'okatopic',
                 casesensitive => 1
             },
-            'case sensitive okatopic topic 1'
+            'case sensitive okatopic topic 1',
+            [],
         );
     }
 
     $this->_getTopicList(
-        ['OkATopic'],
         $this->{test_web},
         {
             includeTopics => 'okatopic',
             casesensitive => 0
         },
-        'case insensitive okatopic topic'
+        'case insensitive okatopic topic',
+        ['OkATopic'],
     );
     ##### same again, with excludes.
     $this->_getTopicList(
-        [
-            'OkATopic', 'OkBTopic',
-            'OkTopic',  'TestTopicSEARCH',
-            'WebPreferences'
-        ],
         $this->{test_web},
         {
             includeTopics => '*',
             excludeTopics => 'web*'
         },
-        'all topics, using wildcard'
+        'all topics, using wildcard',
+        [
+            'OkATopic', 'OkBTopic',
+            'OkTopic',  'TestTopicSEARCH',
+            'WebPreferences'
+        ],
     );
     $this->_getTopicList(
-        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
         $this->{test_web},
         {
             includeTopics => 'Ok*',
             excludeTopics => 'okatopic'
         },
-        'Ok* topics, using wildcard'
+        'Ok* topics, using wildcard',
+        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
     );
     $this->_getTopicList(
-        [],
         $this->{test_web},
         {
             includeTopics => 'ok*',
             excludeTopics => 'WebPreferences',
             casesensitive => 1
         },
-        'case sensitive ok* topics, using wildcard'
+        'case sensitive ok* topics, using wildcard',
+        [],
     );
     $this->_getTopicList(
-        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
         $this->{test_web},
         {
             includeTopics => 'ok*',
             excludeTopics => '',
             casesensitive => 0
         },
-        'case insensitive ok* topics, using wildcard'
+        'case insensitive ok* topics, using wildcard',
+        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
     );
 
     $this->_getTopicList(
-        [ 'OkBTopic', 'OkTopic' ],
         $this->{test_web},
         {
             includeTopics => 'Ok*',
             excludeTopics => '*ATopic',
             casesensitive => 1
         },
-        'case sensitive okatopic topic 2'
+        'case sensitive okatopic topic 2',
+        [ 'OkBTopic', 'OkTopic' ],
     );
 
     $this->_getTopicList(
-        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
-
         $this->{test_web},
         {
             includeTopics => 'Ok*',
             excludeTopics => '*atopic',
             casesensitive => 1
         },
-        'case sensitive okatopic topic 3'
+        'case sensitive okatopic topic 3',
+        [ 'OkATopic', 'OkBTopic', 'OkTopic' ],
     );
 
     $this->_getTopicList(
-        [ 'OkBTopic', 'OkTopic' ],
         $this->{test_web},
         {
             includeTopics => 'ok*topic',
             excludeTopics => 'okatopic',
             casesensitive => 0
         },
-        'case insensitive okatopic topic'
+        'case insensitive okatopic topic',
+        [ 'OkBTopic', 'OkTopic' ],
     );
 
     return;
@@ -2955,7 +2999,19 @@ sub verify_non_paging_with_limit {
 }%'
     );
 
-    my $expected = <<'EXPECT';
+    my $expected;
+    if ( $this->check_dependency('Foswiki,<,1.2') ) {
+        $expected = <<'EXPECT';
+System.WebPreferences
+FOOT(1,1)
+Main.WebPreferences
+FOOT(1,1)
+Sandbox.WebPreferences
+FOOT(1,1)
+EXPECT
+    }
+    else {
+        $expected = <<'EXPECT';
 Main.WebPreferences
 FOOT(1,1)
 Sandbox.WebPreferences
@@ -2963,6 +3019,7 @@ FOOT(1,1)
 System.WebPreferences
 FOOT(1,1)
 EXPECT
+    }
     $expected =~ s/\n$//s;
     $this->assert_str_equals( $expected, $result );
 
@@ -4483,7 +4540,21 @@ sub verify_pager_off_pagerformat_pagerinall {
 }%'
     );
 
-    my $expected = <<'EXPECT';
+    my $expected;
+    if ( $this->check_dependency('Foswiki,<,1.2') ) {
+        $expected = <<'EXPECT';
+HEADER(ntopics=0..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=0
+Main.WebHome (ntopics=1..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=1
+Main.WebIndex (ntopics=2..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=2
+Main.WebPreferences (ntopics=3..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=3
+FOOT(3,3)(ntopics=3..prev=1, 2, next=3, numberofpages=3, pagesize=5..)HEADER(ntopics=0..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=0
+Sandbox.WebChanges (ntopics=1..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=1
+Sandbox.WebHome (ntopics=2..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=2
+FOOT(2,2)(ntopics=2..prev=1, 2, next=3, numberofpages=3, pagesize=5..)
+EXPECT
+    }
+    else {
+        $expected = <<'EXPECT';
 HEADER(ntopics=0..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=0
 Sandbox.WebHome (ntopics=1..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=1
 Sandbox.WebIndex (ntopics=2..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=2
@@ -4493,6 +4564,7 @@ System.WebChanges (ntopics=1..prev=1, 2, next=3, numberofpages=3, pagesize=5..)n
 System.WebHome (ntopics=2..prev=1, 2, next=3, numberofpages=3, pagesize=5..)ntopics=2
 FOOT(2,2)(ntopics=2..prev=1, 2, next=3, numberofpages=3, pagesize=5..)
 EXPECT
+    }
     $expected =~ s/\n$//s;
     $this->assert_str_equals( $expected, $result );
 
