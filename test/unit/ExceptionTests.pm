@@ -5,7 +5,6 @@ use warnings;
 use FoswikiFnTestCase();
 our @ISA = qw( FoswikiFnTestCase );
 
-
 use Error qw( :try );
 use Foswiki::OopsException();
 use Foswiki::AccessControlException();
@@ -134,7 +133,7 @@ sub test_oopsScript {
     );
     $this->createNewFoswikiSession( undef, $query );
     my ($output) =
-      $this->capture( $UI_FN, $session, "Flum", "DeDum", $query, 0 );
+      $this->capture( $UI_FN, $this->{session}, "Flum", "DeDum", $query, 0 );
     $this->assert_matches( qr/^phlegm$/m,           $output );
     $this->assert_matches( qr/^&#60;pus&#62;$/m,    $output );
     $this->assert_matches( qr/^snot&#64;dot.dat$/m, $output );

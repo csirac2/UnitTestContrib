@@ -779,13 +779,13 @@ THIS
     $query->action('view');
     my $viewUrl =
       $this->{session}
-      ->getScriptUrl( '0', 'view', $this->{test_web}, $test_topic );
+      ->getScriptUrl( 0, 'view', $this->{test_web}, $test_topic );
     $query->uri("$viewUrl");
     $this->finishFoswikiSession();
     my ($text) = $this->capture(
         sub {
             my $response = Foswiki::UI::handleRequest($query);
-            $this->createNewFoswikiSession();
+            $this->createNewFoswikiSession( undef, $query );
             $this->{session}{response} = $response;
         }
     );
@@ -793,7 +793,7 @@ THIS
     # Get the login URL to compare
     my $loginUrl =
       $this->{session}
-      ->getScriptUrl( '0', 'login', $this->{test_web}, $test_topic );
+      ->getScriptUrl( 0, 'login', $this->{test_web}, $test_topic );
 
     # Item11121: the test doesn't tolerate ShortURLs, for example.
     # ShortURLs may involve a {ScriptUrlPaths}{view} of '' or something
@@ -809,13 +809,11 @@ THIS
           . "But it returned:\n$text" );
 
     # Check the redirect contains the login url + view to this topic
-    $this->assert_matches(
-        qr#^$loginUrl.*/view/$this->{test_web}/$test_topic$#,
-        $redirect_to,
-        "Login did not redirect to a page with the proper anchor:\n"
+    my $regex = qr#^\Q$loginUrl\E.*/view/$this->{test_web}/$test_topic$#;
+    $this->assert_matches( $regex, $redirect_to,
+            "Login did not redirect to a page with the proper anchor:\n"
           . "Location: $redirect_to\n"
-          . "Expected: ^$loginUrl.*\%23anchor\$"
-    );
+          . "Expected: $regex" );
 
     # Get the redirected page after login
 
