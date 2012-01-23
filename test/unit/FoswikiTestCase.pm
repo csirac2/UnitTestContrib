@@ -496,8 +496,8 @@ sub set_up {
 sub tear_down {
     my $this = shift;
 
-    if ($this->{session}) {
-        ASSERT($this->{session}->isa('Foswiki')) if SESSION_SANITY;
+    if ( $this->{session} ) {
+        ASSERT( $this->{session}->isa('Foswiki') ) if SINGLE_SINGLETONS;
         $this->finishFoswikiSession();
     }
     eval { File::Path::rmtree( $Foswiki::cfg{WorkingDir} ); };
