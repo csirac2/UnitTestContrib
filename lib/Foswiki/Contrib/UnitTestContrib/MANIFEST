@@ -17,6 +17,7 @@ lib/Unit/TestRunner.pm 0644
 lib/Unit/TestSuite.pm 0644
 pub/System/UnitTestContrib/logo.gif 0644
 pub/System/UnitTestContrib/wikiringlogo20x20.png 0644
+test/bin/auto-git-bisect.pl 0755
 test/bin/TestRunner.pl 0755
 test/unit/AccessControlTests.pm 0644
 test/unit/AddToHeadTests.pm 0644
